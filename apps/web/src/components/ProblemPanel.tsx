@@ -1,22 +1,24 @@
 import { ChevronDown, Dices, FunctionSquare, Grid3X3 } from "lucide-react";
 import { estimateOperations, MAX_ESTIMATED_OPERATIONS } from "../lib/validation";
-import type { SolverMethod, SolverParameters } from "../types";
+import type { OptionFamily, SolverMethod, SolverParameters } from "../types";
 import { NumberField } from "./NumberField";
 
 interface ProblemPanelProps {
   parameters: SolverParameters;
   availableMethods: SolverMethod[];
   onChange: <Key extends keyof SolverParameters>(key: Key, value: SolverParameters[Key]) => void;
+  onFamilyChange: (family: OptionFamily) => void;
   onToggleMethod: (method: SolverMethod) => void;
 }
 
 const methodLabels: Record<SolverMethod, string> = {
   closed_form: "Closed form",
+  binomial: "Binomial tree",
   finite_difference: "Finite difference",
   monte_carlo: "Monte Carlo",
 };
 
-export function ProblemPanel({ parameters, availableMethods, onChange, onToggleMethod }: ProblemPanelProps) {
+export function ProblemPanel({ parameters, availableMethods, onChange, onFamilyChange, onToggleMethod }: ProblemPanelProps) {
   const estimatedOperations = estimateOperations(parameters);
   const workPercent = estimatedOperations / MAX_ESTIMATED_OPERATIONS;
 
@@ -28,9 +30,9 @@ export function ProblemPanel({ parameters, availableMethods, onChange, onToggleM
         <h3>Contract <ChevronDown size={15} /></h3>
         <label className="select-field">
           <span>Option family</span>
-          <select value="european" aria-label="Option family" onChange={() => undefined}>
+          <select value={parameters.optionFamily} aria-label="Option family" onChange={(event) => onFamilyChange(event.currentTarget.value as OptionFamily)}>
             <option value="european">European</option>
-            <option value="american" disabled>American — planned</option>
+            <option value="american">American</option>
             <option value="barrier" disabled>Barrier — planned</option>
             <option value="asian" disabled>Asian — planned</option>
           </select>
@@ -77,7 +79,7 @@ export function ProblemPanel({ parameters, availableMethods, onChange, onToggleM
         <h3>Methods</h3>
         {availableMethods.map((method) => {
           const selected = parameters.methods.includes(method);
-          const icon = method === "closed_form" ? <FunctionSquare size={18} />
+          const icon = method === "closed_form" || method === "binomial" ? <FunctionSquare size={18} />
             : method === "finite_difference" ? <Grid3X3 size={18} /> : <Dices size={18} />;
           return (
             <button
@@ -93,6 +95,13 @@ export function ProblemPanel({ parameters, availableMethods, onChange, onToggleM
           );
         })}
       </section>
+
+      {parameters.methods.includes("binomial") ? (
+        <section className="control-section numerical-section">
+          <h3>Binomial tree <ChevronDown size={15} /></h3>
+          <NumberField label="Steps" value={parameters.binomialSteps} min={50} max={4000} step={50} onChange={(value) => onChange("binomialSteps", value)} />
+        </section>
+      ) : null}
 
       {parameters.methods.includes("finite_difference") ? (
         <section className="control-section numerical-section">

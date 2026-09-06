@@ -7,6 +7,11 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.models import MethodResult, SolveRequest, SolveResponse
 from app.solvers.black_scholes import MarketInputs, solve_surface
+from app.solvers.american import (
+    solve_american_binomial,
+    solve_american_finite_difference,
+    solve_american_monte_carlo,
+)
 from app.solvers.finite_difference import solve_finite_difference
 from app.solvers.monte_carlo import solve_monte_carlo
 
@@ -19,7 +24,7 @@ def allowed_origins() -> list[str]:
     return [origin.strip() for origin in configured.split(",") if origin.strip()]
 
 
-app = FastAPI(title="Ithaca Solver API", version="0.2.0")
+app = FastAPI(title="Ithaca Solver API", version="0.3.0")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins(),
@@ -39,12 +44,13 @@ def capabilities() -> dict[str, object]:
     return {
         "option_families": [
             {"id": "european", "status": "available", "methods": ["closed_form", "finite_difference", "monte_carlo"]},
-            {"id": "american", "status": "planned", "methods": []},
+            {"id": "american", "status": "available", "methods": ["binomial", "finite_difference", "monte_carlo"]},
             {"id": "barrier", "status": "planned", "methods": []},
             {"id": "asian", "status": "planned", "methods": []},
         ],
         "methods": [
             {"id": "closed_form", "status": "available"},
+            {"id": "binomial", "status": "available", "tree": "Cox-Ross-Rubinstein"},
             {"id": "finite_difference", "status": "available", "scheme": "Crank-Nicolson"},
             {"id": "monte_carlo", "status": "available", "sampling": "risk-neutral GBM"},
         ],
@@ -53,6 +59,7 @@ def capabilities() -> dict[str, object]:
             "surface_time_steps": {"minimum": 20, "maximum": 160},
             "finite_difference_spot_steps": {"minimum": 51, "maximum": 801},
             "finite_difference_time_steps": {"minimum": 20, "maximum": 2_000},
+            "binomial_steps": {"minimum": 50, "maximum": 4_000},
             "monte_carlo_paths": {"minimum": 1_000, "maximum": 200_000},
             "monte_carlo_steps": {"minimum": 1, "maximum": 512},
             "total_estimated_operations": 120_000_000,
@@ -87,10 +94,31 @@ def solve(request: SolveRequest) -> SolveResponse:
         time_steps=request.surface.time_steps,
     )
     reference_price = float(closed_form["price"])
+    if request.option_family == "american":
+        reference_price = float(solve_american_binomial(
+            inputs=market,
+            side=request.option_side,
+            surface_spot_min=request.surface.spot_min,
+            surface_spot_max=request.surface.spot_max,
+            surface_spot_steps=2,
+            surface_time_steps=2,
+            steps=request.binomial.steps,
+        )["price"])
     results: list[MethodResult] = []
 
     for method in request.methods:
-        if method == "closed_form":
+        if request.option_family == "american" and method == "binomial":
+            raw_result = solve_american_binomial(
+                inputs=market,
+                side=request.option_side,
+                surface_spot_min=request.surface.spot_min,
+                surface_spot_max=request.surface.spot_max,
+                surface_spot_steps=request.surface.spot_steps,
+                surface_time_steps=request.surface.time_steps,
+                steps=request.binomial.steps,
+            )
+            raw_result["reference_error"] = 0.0
+        elif method == "closed_form":
             raw_result = {
                 **closed_form,
                 "method": "closed_form",
@@ -99,7 +127,12 @@ def solve(request: SolveRequest) -> SolveResponse:
             }
         elif method == "finite_difference":
             settings = request.finite_difference
-            raw_result = solve_finite_difference(
+            finite_difference_solver = (
+                solve_american_finite_difference
+                if request.option_family == "american"
+                else solve_finite_difference
+            )
+            raw_result = finite_difference_solver(
                 inputs=market,
                 side=request.option_side,
                 surface_spot_min=request.surface.spot_min,
@@ -113,7 +146,12 @@ def solve(request: SolveRequest) -> SolveResponse:
             raw_result["reference_error"] = abs(float(raw_result["price"]) - reference_price)
         else:
             settings = request.monte_carlo
-            raw_result = solve_monte_carlo(
+            monte_carlo_solver = (
+                solve_american_monte_carlo
+                if request.option_family == "american"
+                else solve_monte_carlo
+            )
+            raw_result = monte_carlo_solver(
                 inputs=market,
                 side=request.option_side,
                 surface_spot_min=request.surface.spot_min,

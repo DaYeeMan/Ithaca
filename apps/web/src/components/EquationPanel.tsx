@@ -1,13 +1,14 @@
 import { BlockMath, InlineMath } from "react-katex";
-import type { OptionSide, SolverMethod } from "../types";
+import type { OptionFamily, OptionSide, SolverMethod } from "../types";
 
 const methodDescription: Record<SolverMethod, string> = {
   closed_form: "Closed form evaluates the analytical Black–Scholes solution and provides the reference for numerical error.",
+  binomial: "Cox–Ross–Rubinstein backward induction compares continuation and immediate exercise at every tree date.",
   finite_difference: "Crank–Nicolson advances the PDE on a finite spot domain. Grid spacing and the numerical boundary determine discretization and truncation error.",
   monte_carlo: "Monte Carlo samples risk-neutral geometric Brownian paths. Reported confidence intervals describe statistical uncertainty, not deterministic precision.",
 };
 
-export function EquationPanel({ side, method }: { side: OptionSide; method: SolverMethod }) {
+export function EquationPanel({ family, side, method }: { family: OptionFamily; side: OptionSide; method: SolverMethod }) {
   const payoff = side === "call" ? "\\max(S-K,0)" : "\\max(K-S,0)";
   return (
     <div className="equation-content">
@@ -20,10 +21,16 @@ export function EquationPanel({ side, method }: { side: OptionSide; method: Solv
       <section>
         <h3>Terminal condition</h3>
         <BlockMath math={`V(S,T)=${payoff}`} />
+        {family === "american" ? <BlockMath math={`V(S,t)\\geq ${payoff}`} /> : null}
       </section>
       <section>
         <h3>Boundary conditions</h3>
-        {side === "call" ? (
+        {family === "american" && side === "put" ? (
+          <>
+            <BlockMath math={"V(0,t)=K"} />
+            <BlockMath math={"V(S_{\\max},t)\\approx0"} />
+          </>
+        ) : side === "call" ? (
           <>
             <BlockMath math={"V(0,t)=0"} />
             <BlockMath math={"V(S_{\\max},t)\\approx S_{\\max}e^{-q(T-t)}-Ke^{-r(T-t)}"} />

@@ -10,6 +10,7 @@ This file tracks unfinished product work. `PROJECT_PLAN.md` remains the source o
 - [x] Phase 1 desktop browser QA: call/put solve flow, surface/slice interaction, equations, error-free console, and concept comparison
 - [x] Phase 1 mobile browser QA at 390 × 844 and 768 × 1024
 - [x] Phase 2: Crank–Nicolson and seeded Monte Carlo comparison, diagnostics, compute limits, cancellation, and browser QA
+- [x] Phase 3: American options, benchmark gates, solver comparison, early-exercise boundary, and browser QA
 
 ## Phase 2 — numerical comparison
 
@@ -35,11 +36,13 @@ Phase 2 exit: closed form, finite difference, and Monte Carlo agree within docum
 
 ### Phase 3 — American
 
-- [ ] Lock `AM-PUT-BASE` with two independent references
-- [ ] Add American call/put contract controls and capability rules
-- [ ] Implement binomial reference, constrained finite differences, and Longstaff–Schwartz Monte Carlo
-- [ ] Render early-exercise boundary
-- [ ] Pass American value, no-dividend call, and exercise-boundary gates
+- [x] Lock `AM-PUT-BASE` with two independent references
+- [x] Add American call/put contract controls and capability rules
+- [x] Implement binomial reference, constrained finite differences, and Longstaff–Schwartz Monte Carlo
+- [x] Render early-exercise boundary
+- [x] Pass American value, no-dividend call, and exercise-boundary gates
+
+Phase 3 exit: American methods agree within locked tolerances, no-dividend calls match European values, exercise behavior passes, and desktop/mobile browser QA passes. Passed.
 
 ### Phase 4 — barrier
 

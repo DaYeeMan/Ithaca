@@ -151,6 +151,7 @@ h2 { margin: 0; font: 23px/1.2 var(--serif); font-weight: 400; }
 
 .chart-panel { grid-area: chart; min-width: 0; min-height: 0; position: relative; }
 .chart-content { height: 100%; min-height: 0; display: flex; flex-direction: column; padding: 18px 22px 12px; }
+.chart-panel.has-message .chart-content { padding-bottom: 58px; }
 .chart-heading-row { display: flex; align-items: center; justify-content: space-between; }
 .active-method-select { display: flex; align-items: center; gap: 9px; color: var(--muted); font-size: 12px; }
 .active-method-select select { height: 32px; color: var(--text); border: 1px solid var(--line); border-radius: 4px; background: var(--surface); padding: 0 9px; }
@@ -227,6 +228,7 @@ h2 { margin: 0; font: 23px/1.2 var(--serif); font-weight: 400; }
   .solve-button { min-width: 90px; }
   .desktop-rail, .status-footer { display: none; }
   .chart-content { min-height: 550px; padding: 18px 14px 10px; }
+  .chart-panel.has-message .chart-content { padding-bottom: 72px; }
   .chart-heading-row h2 { font-size: 25px; }
   .active-method-select span { display: none; }
   .active-method-select select { max-width: 160px; }

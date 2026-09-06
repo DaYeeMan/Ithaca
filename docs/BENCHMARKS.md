@@ -1,6 +1,6 @@
 # Numerical Benchmark Specification
 
-Status: European Phase 2 gates are locked and passing. Later-family expected values must be locked from independent reference implementations before each solver is implemented.
+Status: European Phase 2 gates are locked and passing. The Phase 3 American baseline is locked. Later-family expected values must be locked from independent reference implementations before each solver is implemented.
 
 ## Conventions
 
@@ -71,10 +71,22 @@ Check non-negativity, no-arbitrage bounds, monotonicity, call/put parity, termin
 
 `S=40`, `K=40`, `T=1`, `sigma=0.20`, `r=0.06`, `q=0`.
 
-Lock the expected value before Phase 3 from two independent references:
+Locked expected value: `2.3196`.
 
-1. High-step Cox–Ross–Rubinstein tree with convergence extrapolation.
-2. QuantLib or a published benchmark table, used only as a test oracle.
+Independent references:
+
+1. Test-only Cox–Ross–Rubinstein tree: `2.3195567957` at 16,384 steps and `2.3195655771` at 32,768 steps. First-order Richardson extrapolation gives `2.3195743586`.
+2. Berridge and Schumacher, *Pricing High-Dimensional American Options Using Local Consistency Conditions*, CentER Discussion Paper 2004-19, Table 1: `2.3196` for the equivalent one-dimensional American put. Source: <https://pure.uvt.nl/ws/portalfiles/portal/600547/19.pdf>.
+
+The published value is rounded to four decimals. The independent tree differs by `0.0000256414`. `services/solver-api/tests/test_american_benchmarks.py` owns the test oracle and must not be imported by production solvers.
+
+Phase 3 production conventions:
+
+- Production binomial reference: 800-step Cox–Ross–Rubinstein tree. Surface slices use at most 100 steps to remain interactive.
+- American finite difference: uniform 241-node spot grid, 240 time steps, `S_max = 120` for `AM-PUT-BASE`, Crank–Nicolson LCP solved by PSOR with `omega = 1.2` and residual-change tolerance `1e-8`.
+- Longstaff–Schwartz: 20,000 paths, 64 exercise dates, seed 1729, antithetic sampling, and quadratic basis `1`, `S/K`, `(S/K)^2`.
+- Longstaff–Schwartz surfaces use common antithetic random numbers, 512 paths per spot, at most 24 exercise dates, and pooled spot regression. Scalar confidence intervals use the full requested budget.
+- American Monte Carlo path grids are capped at 20,000,000 stored nodes.
 
 Acceptance:
 
@@ -82,6 +94,12 @@ Acceptance:
 - Longstaff–Schwartz price agrees within its reported statistical interval and documented regression tolerance.
 - American put price is no less than European put price.
 - Exercise boundary is monotone under the baseline assumptions.
+
+Locked Phase 3 results:
+
+- 800-step production binomial: `2.3192041545`; absolute reference error `0.0003958455`.
+- Default LCP/PSOR with `S_max = 120`: `2.3177472324`; absolute reference error `0.0018527676`.
+- Seeded Longstaff–Schwartz: `2.3319841353`, standard error `0.0121611142`, 95% interval `[2.3081487895, 2.3558194811]`; locked reference covered.
 
 ### `AM-CALL-NO-DIVIDEND`
 

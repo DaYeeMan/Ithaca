@@ -4,6 +4,11 @@ export const MAX_ESTIMATED_OPERATIONS = 120_000_000;
 
 export function estimateOperations(parameters: SolverParameters): number {
   let operations = parameters.spotSteps * parameters.timeSteps;
+  if (parameters.methods.includes("binomial")) {
+    const surfaceTreeSteps = Math.min(parameters.binomialSteps, 100);
+    operations += Math.floor(parameters.binomialSteps ** 2 / 2)
+      + Math.floor(parameters.timeSteps * parameters.spotSteps * surfaceTreeSteps ** 2 / 2);
+  }
   if (parameters.methods.includes("finite_difference")) {
     operations += parameters.finiteDifferenceSpotSteps * parameters.finiteDifferenceTimeSteps;
   }
@@ -20,6 +25,10 @@ export function validateParameters(parameters: SolverParameters): string | null 
   if (values.some((value) => !Number.isFinite(value))) return "Every parameter must be a finite number.";
   if (parameters.methods.length === 0) return "Select at least one solution method.";
   if (new Set(parameters.methods).size !== parameters.methods.length) return "Each solution method may be selected once.";
+  const compatible = parameters.optionFamily === "european"
+    ? new Set(["closed_form", "finite_difference", "monte_carlo"])
+    : new Set(["binomial", "finite_difference", "monte_carlo"]);
+  if (parameters.methods.some((method) => !compatible.has(method))) return "Selected method is not compatible with this option family.";
   if (parameters.spot <= 0 || parameters.strike <= 0) return "Spot and strike must be greater than zero.";
   if (parameters.maturity <= 0 || parameters.maturity > 50) return "Maturity must be between 0 and 50 years.";
   if (parameters.volatility <= 0 || parameters.volatility > 5) return "Volatility must be between 0% and 500%.";
@@ -59,7 +68,13 @@ export function validateParameters(parameters: SolverParameters): string | null 
     if (parameters.confidenceLevel < 0.8 || parameters.confidenceLevel > 0.999) {
       return "Confidence level must be between 80% and 99.9%.";
     }
+    if (parameters.optionFamily === "american" && parameters.monteCarloPaths * parameters.monteCarloSteps > 20_000_000) {
+      return "American Monte Carlo path grid exceeds the 20,000,000 node memory budget.";
+    }
   }
+  if (parameters.methods.includes("binomial") && (
+    !Number.isInteger(parameters.binomialSteps) || parameters.binomialSteps < 50 || parameters.binomialSteps > 4000
+  )) return "Binomial steps must be an integer between 50 and 4,000.";
   if (estimateOperations(parameters) > MAX_ESTIMATED_OPERATIONS) {
     return "Requested work exceeds the 120,000,000 operation budget.";
   }

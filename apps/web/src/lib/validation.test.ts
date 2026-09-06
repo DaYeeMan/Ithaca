@@ -3,6 +3,7 @@ import { estimateOperations, validateParameters } from "./validation";
 import type { SolverParameters } from "../types";
 
 const valid: SolverParameters = {
+  optionFamily: "european",
   optionSide: "call",
   methods: ["closed_form", "finite_difference", "monte_carlo"],
   spot: 100,
@@ -23,6 +24,7 @@ const valid: SolverParameters = {
   monteCarloSeed: 1_729,
   monteCarloAntithetic: true,
   confidenceLevel: 0.95,
+  binomialSteps: 800,
 };
 
 describe("validateParameters", () => {
@@ -48,5 +50,18 @@ describe("validateParameters", () => {
 
   it("matches the documented default work estimate", () => {
     expect(estimateOperations(valid)).toBe(63_560_951);
+  });
+
+  it("enforces American method compatibility", () => {
+    const american = { ...valid, optionFamily: "american" as const, methods: ["closed_form"] as const };
+    expect(validateParameters({ ...american, methods: [...american.methods] })).toMatch(/not compatible/i);
+  });
+
+  it("accepts American Phase 3 methods", () => {
+    expect(validateParameters({
+      ...valid,
+      optionFamily: "american",
+      methods: ["binomial", "finite_difference", "monte_carlo"],
+    })).toBeNull();
   });
 });

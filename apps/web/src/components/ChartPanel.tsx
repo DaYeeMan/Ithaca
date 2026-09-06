@@ -20,12 +20,14 @@ const plotConfig = {
 
 const methodLabels: Record<SolverMethod, string> = {
   closed_form: "Closed form",
+  binomial: "Binomial tree",
   finite_difference: "Finite difference",
   monte_carlo: "Monte Carlo",
 };
 
 const methodColors: Record<SolverMethod, string> = {
   closed_form: "#86d849",
+  binomial: "#86d849",
   finite_difference: "#24d5e7",
   monte_carlo: "#ffb000",
 };
@@ -51,7 +53,7 @@ export function ChartPanel({
   const [sliceIndex, setSliceIndex] = useState<number | null>(null);
   const activeResult = resultFor(response, activeMethod);
   const monteCarlo = response?.results.find((result) => result.method === "monte_carlo") ?? null;
-  const reference = response?.results.find((result) => result.method === "closed_form") ?? null;
+  const reference = response?.results.find((result) => result.method === "closed_form" || result.method === "binomial") ?? null;
   const visibleTab = !monteCarlo && (tab === "convergence" || tab === "paths") ? "surface" : tab;
   const selectedIndex = activeResult
     ? Math.min(sliceIndex ?? activeResult.surface.times_to_maturity.length - 1, activeResult.surface.times_to_maturity.length - 1)
@@ -90,6 +92,27 @@ export function ChartPanel({
         line: { color: methodColors[result.method], width: result.method === activeResult.method ? 6 : 3 },
         hovertemplate: `Spot %{x:.2f}<br>Price %{z:.4f}<extra>${methodLabels[result.method]}</extra>`,
         showlegend: true,
+      } as Data);
+    }
+    if (activeResult.exercise_boundary) {
+      const points = activeResult.exercise_boundary.times_to_maturity
+        .map((time, index) => ({ time, spot: activeResult.exercise_boundary?.spots[index] }))
+        .filter((point): point is { time: number; spot: number } => point.spot != null);
+      traces.push({
+        type: "scatter3d",
+        mode: "lines",
+        x: points.map((point) => point.spot),
+        y: points.map((point) => point.time),
+        z: points.map((point) => {
+          const timeIndex = activeResult.surface.times_to_maturity.reduce((best, time, index, times) =>
+            Math.abs(time - point.time) < Math.abs(times[best] - point.time) ? index : best, 0);
+          const spotIndex = activeResult.surface.spots.reduce((best, spot, index, spots) =>
+            Math.abs(spot - point.spot) < Math.abs(spots[best] - point.spot) ? index : best, 0);
+          return activeResult.surface.prices[timeIndex][spotIndex];
+        }),
+        name: "Exercise boundary",
+        line: { color: "#ff5f6d", width: 7 },
+        hovertemplate: "Boundary spot %{x:.2f}<br>τ %{y:.3f}<extra></extra>",
       } as Data);
     }
     return traces;

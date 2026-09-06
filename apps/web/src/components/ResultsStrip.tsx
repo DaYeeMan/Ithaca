@@ -3,6 +3,7 @@ import type { SolveResponse, SolverMethod } from "../types";
 
 const labels: Record<SolverMethod, string> = {
   closed_form: "Closed form",
+  binomial: "Binomial tree",
   finite_difference: "Finite difference",
   monte_carlo: "Monte Carlo",
 };

@@ -8,7 +8,7 @@ export async function getCapabilities(signal?: AbortSignal): Promise<Capabilitie
   return response.json() as Promise<Capabilities>;
 }
 
-export async function solveEuropean(
+export async function solveOption(
   parameters: SolverParameters,
   signal?: AbortSignal,
 ): Promise<SolveResponse> {
@@ -17,7 +17,7 @@ export async function solveEuropean(
     headers: { "Content-Type": "application/json" },
     signal,
     body: JSON.stringify({
-      option_family: "european",
+      option_family: parameters.optionFamily,
       option_side: parameters.optionSide,
       methods: parameters.methods,
       market: {
@@ -46,6 +46,7 @@ export async function solveEuropean(
         antithetic: parameters.monteCarloAntithetic,
         confidence_level: parameters.confidenceLevel,
       },
+      binomial: { steps: parameters.binomialSteps },
     }),
   });
 

@@ -1,7 +1,9 @@
 export type OptionSide = "call" | "put";
-export type SolverMethod = "closed_form" | "finite_difference" | "monte_carlo";
+export type OptionFamily = "european" | "american";
+export type SolverMethod = "closed_form" | "binomial" | "finite_difference" | "monte_carlo";
 
 export interface SolverParameters {
+  optionFamily: OptionFamily;
   optionSide: OptionSide;
   methods: SolverMethod[];
   spot: number;
@@ -22,6 +24,7 @@ export interface SolverParameters {
   monteCarloSeed: number;
   monteCarloAntithetic: boolean;
   confidenceLevel: number;
+  binomialSteps: number;
 }
 
 export interface SurfaceResult {
@@ -62,6 +65,7 @@ export interface MethodResult {
   reference_error?: number | null;
   convergence: ConvergencePoint[];
   sample_paths: SamplePath[];
+  exercise_boundary?: { times_to_maturity: number[]; spots: Array<number | null> } | null;
   diagnostics: Record<string, number | string | boolean>;
   warnings: string[];
 }

@@ -2,7 +2,7 @@
 
 Interactive option-pricing PDE solver and visualization workbench.
 
-Phase 2 prices European calls and puts with the Black–Scholes closed form, Crank–Nicolson finite differences, and seeded risk-neutral Monte Carlo. It renders a 3D price surface, synchronized price/error slices, Monte Carlo confidence bands, convergence, sample paths, governing equations, boundary conditions, and numerical diagnostics. American, Asian, and barrier contracts remain planned phases.
+Phase 3 prices European and American calls and puts. European methods are Black–Scholes closed form, Crank–Nicolson finite differences, and seeded risk-neutral Monte Carlo. American methods are a Cox–Ross–Rubinstein tree, Crank–Nicolson with a PSOR early-exercise constraint, and Longstaff–Schwartz Monte Carlo. The workbench renders synchronized surfaces and slices, uncertainty, convergence, sample paths, governing equations, numerical diagnostics, and the American early-exercise boundary. Asian and barrier contracts remain planned phases.
 
 ## Local development
 

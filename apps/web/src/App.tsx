@@ -11,17 +11,21 @@ import {
 import { EquationPanel } from "./components/EquationPanel";
 import { ProblemPanel } from "./components/ProblemPanel";
 import { ResultsStrip } from "./components/ResultsStrip";
-import { getCapabilities, solveEuropean } from "./lib/api";
+import { getCapabilities, solveOption } from "./lib/api";
 import { validateParameters } from "./lib/validation";
-import type { Capabilities, SolveResponse, SolverMethod, SolverParameters } from "./types";
+import type { Capabilities, OptionFamily, SolveResponse, SolverMethod, SolverParameters } from "./types";
 
 const ChartPanel = lazy(() => import("./components/ChartPanel").then((module) => ({ default: module.ChartPanel })));
 
-const ALL_METHODS: SolverMethod[] = ["closed_form", "finite_difference", "monte_carlo"];
+const FAMILY_METHODS: Record<OptionFamily, SolverMethod[]> = {
+  european: ["closed_form", "finite_difference", "monte_carlo"],
+  american: ["binomial", "finite_difference", "monte_carlo"],
+};
 
 const DEFAULT_PARAMETERS: SolverParameters = {
+  optionFamily: "european",
   optionSide: "call",
-  methods: ALL_METHODS,
+  methods: FAMILY_METHODS.european,
   spot: 100,
   strike: 100,
   maturity: 1,
@@ -40,6 +44,7 @@ const DEFAULT_PARAMETERS: SolverParameters = {
   monteCarloSeed: 1_729,
   monteCarloAntithetic: true,
   confidenceLevel: 0.95,
+  binomialSteps: 800,
 };
 
 type Status = "idle" | "solving" | "error";
@@ -60,7 +65,7 @@ export default function App() {
     const controller = new AbortController();
     activeRequest.current = controller;
     getCapabilities(controller.signal).then(setCapabilities).catch(() => undefined);
-    solveEuropean(DEFAULT_PARAMETERS, controller.signal)
+    solveOption(DEFAULT_PARAMETERS, controller.signal)
       .then((nextResponse) => {
         startTransition(() => setResponse(nextResponse));
         setStatus("idle");
@@ -93,11 +98,23 @@ export default function App() {
     }
     const methods = selected
       ? parameters.methods.filter((candidate) => candidate !== method)
-      : ALL_METHODS.filter((candidate) => parameters.methods.includes(candidate) || candidate === method);
+      : FAMILY_METHODS[parameters.optionFamily].filter((candidate) => parameters.methods.includes(candidate) || candidate === method);
     setParameters((current) => ({ ...current, methods }));
     if (!methods.includes(activeMethod)) setActiveMethod(methods[0]);
     setMessage(null);
-  }, [activeMethod, parameters.methods]);
+  }, [activeMethod, parameters.methods, parameters.optionFamily]);
+
+  const changeFamily = useCallback((family: OptionFamily) => {
+    const methods = FAMILY_METHODS[family];
+    setParameters((current) => ({
+      ...current,
+      optionFamily: family,
+      methods,
+      finiteDifferenceDomainMax: family === "american" ? Math.max(current.spotMax, current.strike * 3) : Math.max(300, current.spotMax),
+    }));
+    setActiveMethod(methods[0]);
+    setMessage(null);
+  }, []);
 
   const cancelSolve = useCallback(() => {
     activeRequest.current?.abort();
@@ -119,7 +136,7 @@ export default function App() {
     setStatus("solving");
     setMessage(null);
     try {
-      const nextResponse = await solveEuropean(parameters, controller.signal);
+      const nextResponse = await solveOption(parameters, controller.signal);
       startTransition(() => setResponse(nextResponse));
       setStatus("idle");
       setMessage(nextResponse.warnings[0] ?? null);
@@ -143,7 +160,8 @@ export default function App() {
     setMessage(null);
   }, []);
 
-  const availableMethods = capabilities?.option_families.find((family) => family.id === "european")?.methods ?? ALL_METHODS;
+  const availableMethods = capabilities?.option_families.find((family) => family.id === parameters.optionFamily)?.methods
+    ?? FAMILY_METHODS[parameters.optionFamily];
 
   return (
     <main className="app-shell">
@@ -164,10 +182,10 @@ export default function App() {
       </header>
 
       <aside className="problem-panel desktop-rail">
-        <ProblemPanel parameters={parameters} availableMethods={availableMethods} onChange={changeParameter} onToggleMethod={toggleMethod} />
+        <ProblemPanel parameters={parameters} availableMethods={availableMethods} onChange={changeParameter} onFamilyChange={changeFamily} onToggleMethod={toggleMethod} />
       </aside>
 
-      <section className="chart-panel">
+      <section className={`chart-panel${message ? " has-message" : ""}`}>
         <Suspense fallback={<div className="chart-loading"><span className="status-spinner" />Loading visualization…</div>}>
           <ChartPanel response={response} activeMethod={activeMethod} onActiveMethodChange={setActiveMethod} loading={status === "solving"} />
         </Suspense>
@@ -175,13 +193,13 @@ export default function App() {
       </section>
 
       <aside className="equation-panel desktop-rail">
-        <EquationPanel side={parameters.optionSide} method={activeMethod} />
+        <EquationPanel family={parameters.optionFamily} side={parameters.optionSide} method={activeMethod} />
       </aside>
 
       <ResultsStrip response={response} activeMethod={activeMethod} status={status} />
 
       <footer className="status-footer">
-        <span>Model: Black–Scholes</span><span>Currency: USD</span><span>Phase 2 · Numerical comparison</span>
+        <span>Model: Black–Scholes</span><span>Currency: USD</span><span>Phase 3 · American options</span>
       </footer>
 
       <nav className="mobile-nav" aria-label="Workbench panels">
@@ -194,8 +212,8 @@ export default function App() {
         <section className="mobile-sheet" aria-label={`${mobilePanel} panel`}>
           <div className="sheet-handle" />
           <button className="sheet-close" aria-label="Close panel" onClick={() => setMobilePanel(null)}><X /></button>
-          {mobilePanel === "problem" ? <ProblemPanel parameters={parameters} availableMethods={availableMethods} onChange={changeParameter} onToggleMethod={toggleMethod} /> : null}
-          {mobilePanel === "equation" ? <EquationPanel side={parameters.optionSide} method={activeMethod} /> : null}
+          {mobilePanel === "problem" ? <ProblemPanel parameters={parameters} availableMethods={availableMethods} onChange={changeParameter} onFamilyChange={changeFamily} onToggleMethod={toggleMethod} /> : null}
+          {mobilePanel === "equation" ? <EquationPanel family={parameters.optionFamily} side={parameters.optionSide} method={activeMethod} /> : null}
           {mobilePanel === "results" ? <ResultsStrip response={response} activeMethod={activeMethod} status={status} /> : null}
         </section>
       ) : null}
