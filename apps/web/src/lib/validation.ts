@@ -1,15 +1,67 @@
 import type { SolverParameters } from "../types";
 
+export const MAX_ESTIMATED_OPERATIONS = 120_000_000;
+
+export function estimateOperations(parameters: SolverParameters): number {
+  let operations = parameters.spotSteps * parameters.timeSteps;
+  if (parameters.methods.includes("finite_difference")) {
+    operations += parameters.finiteDifferenceSpotSteps * parameters.finiteDifferenceTimeSteps;
+  }
+  if (parameters.methods.includes("monte_carlo")) {
+    operations += parameters.monteCarloPaths * (
+      parameters.monteCarloSteps + parameters.spotSteps * parameters.timeSteps
+    );
+  }
+  return operations;
+}
+
 export function validateParameters(parameters: SolverParameters): string | null {
   const values = Object.values(parameters).filter((value): value is number => typeof value === "number");
   if (values.some((value) => !Number.isFinite(value))) return "Every parameter must be a finite number.";
+  if (parameters.methods.length === 0) return "Select at least one solution method.";
+  if (new Set(parameters.methods).size !== parameters.methods.length) return "Each solution method may be selected once.";
   if (parameters.spot <= 0 || parameters.strike <= 0) return "Spot and strike must be greater than zero.";
   if (parameters.maturity <= 0 || parameters.maturity > 50) return "Maturity must be between 0 and 50 years.";
   if (parameters.volatility <= 0 || parameters.volatility > 5) return "Volatility must be between 0% and 500%.";
+  if (parameters.rate < -1 || parameters.rate > 1 || parameters.dividend < -1 || parameters.dividend > 1) {
+    return "Rate and dividend yield must be between -100% and 100%.";
+  }
   if (parameters.spotMin < 0 || parameters.spotMax <= parameters.spotMin) return "Surface maximum spot must exceed minimum spot.";
-  if (parameters.spotSteps < 20 || parameters.spotSteps > 160 || parameters.timeSteps < 20 || parameters.timeSteps > 160) {
-    return "Surface grids must contain between 20 and 160 points per axis.";
+  if (!Number.isInteger(parameters.spotSteps) || !Number.isInteger(parameters.timeSteps)
+    || parameters.spotSteps < 20 || parameters.spotSteps > 160
+    || parameters.timeSteps < 20 || parameters.timeSteps > 160) {
+    return "Surface grids must contain between 20 and 160 integer points per axis.";
+  }
+  if (parameters.methods.includes("finite_difference")) {
+    if (!Number.isInteger(parameters.finiteDifferenceSpotSteps)
+      || parameters.finiteDifferenceSpotSteps < 51 || parameters.finiteDifferenceSpotSteps > 801
+      || !Number.isInteger(parameters.finiteDifferenceTimeSteps)
+      || parameters.finiteDifferenceTimeSteps < 20 || parameters.finiteDifferenceTimeSteps > 2000) {
+      return "Finite-difference grids exceed supported limits.";
+    }
+    if (parameters.finiteDifferenceDomainMax < Math.max(parameters.spot, parameters.spotMax)) {
+      return "Finite-difference domain must cover spot and surface maximum.";
+    }
+  }
+  if (parameters.methods.includes("monte_carlo")) {
+    if (!Number.isInteger(parameters.monteCarloPaths) || parameters.monteCarloPaths < 1000 || parameters.monteCarloPaths > 200000) {
+      return "Monte Carlo paths must be an integer between 1,000 and 200,000.";
+    }
+    if (parameters.monteCarloAntithetic && parameters.monteCarloPaths % 2 !== 0) {
+      return "Monte Carlo paths must be even with antithetic sampling.";
+    }
+    if (!Number.isInteger(parameters.monteCarloSteps) || parameters.monteCarloSteps < 1 || parameters.monteCarloSteps > 512) {
+      return "Monte Carlo steps must be an integer between 1 and 512.";
+    }
+    if (parameters.monteCarloSeed < 0 || parameters.monteCarloSeed > 2_147_483_647 || !Number.isInteger(parameters.monteCarloSeed)) {
+      return "Monte Carlo seed must be an integer between 0 and 2,147,483,647.";
+    }
+    if (parameters.confidenceLevel < 0.8 || parameters.confidenceLevel > 0.999) {
+      return "Confidence level must be between 80% and 99.9%.";
+    }
+  }
+  if (estimateOperations(parameters) > MAX_ESTIMATED_OPERATIONS) {
+    return "Requested work exceeds the 120,000,000 operation budget.";
   }
   return null;
 }
-

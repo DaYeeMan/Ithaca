@@ -2,7 +2,7 @@
 
 Interactive option-pricing PDE solver and visualization workbench.
 
-Phase 1 prices European calls and puts with the Black–Scholes closed form. It renders a 3D price surface, a synchronized 2D price slice, governing equations, boundary conditions, and numerical results. American, Asian, barrier, finite-difference, and Monte Carlo paths remain planned phases.
+Phase 2 prices European calls and puts with the Black–Scholes closed form, Crank–Nicolson finite differences, and seeded risk-neutral Monte Carlo. It renders a 3D price surface, synchronized price/error slices, Monte Carlo confidence bands, convergence, sample paths, governing equations, boundary conditions, and numerical diagnostics. American, Asian, and barrier contracts remain planned phases.
 
 ## Local development
 

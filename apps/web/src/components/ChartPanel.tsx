@@ -2,14 +2,14 @@ import { useMemo, useState } from "react";
 import createPlotlyComponent from "react-plotly.js/factory";
 import Plotly from "plotly.js-dist-min";
 import type { Data, Layout } from "plotly.js";
-import type { SolveResult } from "../types";
+import type { MethodResult, SolveResponse, SolverMethod } from "../types";
 
 const plotFactory = (
   createPlotlyComponent as unknown as { default?: typeof createPlotlyComponent }
 ).default ?? createPlotlyComponent;
 const Plot = plotFactory(Plotly);
 
-type ChartTab = "surface" | "slice";
+type ChartTab = "surface" | "slice" | "convergence" | "paths";
 
 const plotConfig = {
   displaylogo: false,
@@ -18,72 +18,204 @@ const plotConfig = {
   modeBarButtonsToRemove: ["toImage", "sendDataToCloud", "lasso2d", "select2d"] as never[],
 };
 
+const methodLabels: Record<SolverMethod, string> = {
+  closed_form: "Closed form",
+  finite_difference: "Finite difference",
+  monte_carlo: "Monte Carlo",
+};
+
+const methodColors: Record<SolverMethod, string> = {
+  closed_form: "#86d849",
+  finite_difference: "#24d5e7",
+  monte_carlo: "#ffb000",
+};
+
 const baseFont = { family: "Inter, ui-sans-serif, system-ui, sans-serif", color: "#dfe8ef", size: 12 };
 
-export function ChartPanel({ result, loading }: { result: SolveResult | null; loading: boolean }) {
+function resultFor(response: SolveResponse | null, method: SolverMethod): MethodResult | null {
+  return response?.results.find((result) => result.method === method) ?? response?.results[0] ?? null;
+}
+
+export function ChartPanel({
+  response,
+  activeMethod,
+  onActiveMethodChange,
+  loading,
+}: {
+  response: SolveResponse | null;
+  activeMethod: SolverMethod;
+  onActiveMethodChange: (method: SolverMethod) => void;
+  loading: boolean;
+}) {
   const [tab, setTab] = useState<ChartTab>("surface");
   const [sliceIndex, setSliceIndex] = useState<number | null>(null);
-
-  const selectedIndex = result
-    ? Math.min(sliceIndex ?? result.surface.times_to_maturity.length - 1, result.surface.times_to_maturity.length - 1)
+  const activeResult = resultFor(response, activeMethod);
+  const monteCarlo = response?.results.find((result) => result.method === "monte_carlo") ?? null;
+  const reference = response?.results.find((result) => result.method === "closed_form") ?? null;
+  const visibleTab = !monteCarlo && (tab === "convergence" || tab === "paths") ? "surface" : tab;
+  const selectedIndex = activeResult
+    ? Math.min(sliceIndex ?? activeResult.surface.times_to_maturity.length - 1, activeResult.surface.times_to_maturity.length - 1)
     : 0;
 
   const surfaceData = useMemo<Data[]>(() => {
-    if (!result) return [];
-    const { spots, times_to_maturity: times, prices } = result.surface;
-    const lineValues = prices[selectedIndex];
-    return [
-      {
-        type: "surface",
-        x: spots,
-        y: times,
-        z: prices,
-        colorscale: [
-          [0, "#171a57"],
-          [0.28, "#075b93"],
-          [0.56, "#07a88f"],
-          [0.78, "#8bcf43"],
-          [1, "#ffcb2c"],
-        ],
-        colorbar: { title: { text: "Price", font: baseFont }, orientation: "h", x: 0.5, y: -0.08, len: 0.58, thickness: 10, tickfont: baseFont },
-        contours: { x: { show: true, color: "rgba(255,255,255,.28)", width: 1 }, y: { show: true, color: "rgba(255,255,255,.28)", width: 1 } },
-        hovertemplate: "Spot %{x:.2f}<br>τ %{y:.3f} yr<br>Price %{z:.4f}<extra>Closed form</extra>",
-        showscale: true,
-      },
-      {
+    if (!activeResult) return [];
+    const { spots, times_to_maturity: times, prices } = activeResult.surface;
+    const traces: Data[] = [{
+      type: "surface",
+      x: spots,
+      y: times,
+      z: prices,
+      name: methodLabels[activeResult.method],
+      colorscale: [
+        [0, "#171a57"],
+        [0.28, "#075b93"],
+        [0.56, "#07a88f"],
+        [0.78, "#8bcf43"],
+        [1, "#ffcb2c"],
+      ],
+      colorbar: { title: { text: "Price", font: baseFont }, orientation: "h", x: 0.5, y: -0.08, len: 0.58, thickness: 10, tickfont: baseFont },
+      contours: { x: { show: true, color: "rgba(255,255,255,.28)", width: 1 }, y: { show: true, color: "rgba(255,255,255,.28)", width: 1 } },
+      hovertemplate: `Spot %{x:.2f}<br>τ %{y:.3f} yr<br>Price %{z:.4f}<extra>${methodLabels[activeResult.method]}</extra>`,
+      showscale: true,
+    } as Data];
+
+    for (const result of response?.results ?? []) {
+      traces.push({
         type: "scatter3d",
         mode: "lines",
-        x: spots,
-        y: spots.map(() => times[selectedIndex]),
-        z: lineValues,
-        line: { color: "#f6f3ea", width: 5 },
-        hoverinfo: "skip",
-        showlegend: false,
-      },
-    ] as Data[];
-  }, [result, selectedIndex]);
+        x: result.surface.spots,
+        y: result.surface.spots.map(() => result.surface.times_to_maturity[selectedIndex]),
+        z: result.surface.prices[selectedIndex],
+        name: methodLabels[result.method],
+        line: { color: methodColors[result.method], width: result.method === activeResult.method ? 6 : 3 },
+        hovertemplate: `Spot %{x:.2f}<br>Price %{z:.4f}<extra>${methodLabels[result.method]}</extra>`,
+        showlegend: true,
+      } as Data);
+    }
+    return traces;
+  }, [activeResult, response, selectedIndex]);
 
   const sliceData = useMemo<Data[]>(() => {
-    if (!result) return [];
-    return [{
+    if (!response) return [];
+    const traces: Data[] = [];
+    for (const result of response.results) {
+      if (result.method === "monte_carlo" && result.surface.confidence_lower && result.surface.confidence_upper) {
+        traces.push({
+          type: "scatter",
+          mode: "lines",
+          x: result.surface.spots,
+          y: result.surface.confidence_lower[selectedIndex],
+          line: { width: 0 },
+          hoverinfo: "skip",
+          showlegend: false,
+        } as Data);
+        traces.push({
+          type: "scatter",
+          mode: "lines",
+          x: result.surface.spots,
+          y: result.surface.confidence_upper[selectedIndex],
+          line: { width: 0 },
+          fill: "tonexty",
+          fillcolor: "rgba(255,176,0,.16)",
+          name: "Monte Carlo confidence band",
+          hoverinfo: "skip",
+        } as Data);
+      }
+      traces.push({
+        type: "scatter",
+        mode: "lines",
+        x: result.surface.spots,
+        y: result.surface.prices[selectedIndex],
+        name: methodLabels[result.method],
+        line: { color: methodColors[result.method], width: result.method === activeResult?.method ? 3 : 2 },
+        hovertemplate: `Spot %{x:.2f}<br>Price %{y:.4f}<extra>${methodLabels[result.method]}</extra>`,
+      } as Data);
+      if (reference && result.method !== "closed_form") {
+        traces.push({
+          type: "scatter",
+          mode: "lines",
+          x: result.surface.spots,
+          y: result.surface.prices[selectedIndex].map((price, index) => price - reference.surface.prices[selectedIndex][index]),
+          xaxis: "x2",
+          yaxis: "y2",
+          name: `${methodLabels[result.method]} error`,
+          line: { color: methodColors[result.method], width: 2, dash: "dot" },
+          hovertemplate: "Spot %{x:.2f}<br>Error %{y:.5f}<extra></extra>",
+        } as Data);
+      }
+    }
+    return traces;
+  }, [activeResult?.method, reference, response, selectedIndex]);
+
+  const convergenceData = useMemo<Data[]>(() => {
+    if (!monteCarlo) return [];
+    const points = monteCarlo.convergence;
+    const traces: Data[] = [
+      {
+        type: "scatter",
+        mode: "lines",
+        x: points.map((point) => point.paths),
+        y: points.map((point) => point.lower),
+        line: { width: 0 },
+        hoverinfo: "skip",
+        showlegend: false,
+      } as Data,
+      {
+        type: "scatter",
+        mode: "lines",
+        x: points.map((point) => point.paths),
+        y: points.map((point) => point.upper),
+        line: { width: 0 },
+        fill: "tonexty",
+        fillcolor: "rgba(255,176,0,.18)",
+        name: "Confidence band",
+        hoverinfo: "skip",
+      } as Data,
+      {
+        type: "scatter",
+        mode: "lines+markers",
+        x: points.map((point) => point.paths),
+        y: points.map((point) => point.price),
+        name: "Monte Carlo",
+        line: { color: methodColors.monte_carlo, width: 3 },
+        hovertemplate: "%{x:,} paths<br>Price %{y:.4f}<extra></extra>",
+      } as Data,
+    ];
+    if (reference) {
+      traces.push({
+        type: "scatter",
+        mode: "lines",
+        x: points.map((point) => point.paths),
+        y: points.map(() => reference.price),
+        name: "Closed-form reference",
+        line: { color: methodColors.closed_form, width: 2, dash: "dash" },
+      } as Data);
+    }
+    return traces;
+  }, [monteCarlo, reference]);
+
+  const pathsData = useMemo<Data[]>(() => {
+    if (!monteCarlo) return [];
+    return monteCarlo.sample_paths.map((path, index) => ({
       type: "scatter",
       mode: "lines",
-      x: result.surface.spots,
-      y: result.surface.prices[selectedIndex],
-      line: { color: "#22d3e6", width: 3 },
-      fill: "tozeroy",
-      fillcolor: "rgba(34,211,230,.08)",
-      hovertemplate: "Spot %{x:.2f}<br>Price %{y:.4f}<extra>Closed form</extra>",
-    } as Data];
-  }, [result, selectedIndex]);
+      x: path.times,
+      y: path.spots,
+      name: `Path ${index + 1}`,
+      line: { color: `hsla(${185 + index * 12}, 75%, 60%, .62)`, width: 1.5 },
+      hovertemplate: "Time %{x:.3f}<br>Spot %{y:.2f}<extra></extra>",
+      showlegend: false,
+    } as Data));
+  }, [monteCarlo]);
 
   const commonLayout: Partial<Layout> = {
     autosize: true,
     paper_bgcolor: "rgba(0,0,0,0)",
     plot_bgcolor: "rgba(0,0,0,0)",
     font: baseFont,
-    margin: { l: 54, r: 24, t: 20, b: 72 },
-    showlegend: false,
+    margin: { l: 58, r: 24, t: 20, b: 64 },
+    legend: { orientation: "h", y: 1.08, x: 0, font: { ...baseFont, size: 10 } },
+    showlegend: true,
   };
 
   const surfaceLayout: Partial<Layout> = {
@@ -99,34 +231,54 @@ export function ChartPanel({ result, loading }: { result: SolveResult | null; lo
     },
   };
 
+  const hasDifference = Boolean(reference && response && response.results.length > 1);
   const sliceLayout: Partial<Layout> = {
     ...commonLayout,
-    xaxis: { title: { text: "Spot (S)" }, gridcolor: "#243849", zerolinecolor: "#536474" },
-    yaxis: { title: { text: "Option price" }, gridcolor: "#243849", zerolinecolor: "#536474" },
+    margin: { l: 58, r: 24, t: 28, b: 48 },
+    xaxis: { gridcolor: "#243849", zerolinecolor: "#536474", domain: [0, 1] },
+    yaxis: { title: { text: "Option price" }, gridcolor: "#243849", zerolinecolor: "#536474", domain: hasDifference ? [0.36, 1] : [0, 1] },
+    xaxis2: hasDifference ? { title: { text: "Spot (S)" }, gridcolor: "#243849", zerolinecolor: "#536474", domain: [0, 1] } : undefined,
+    yaxis2: hasDifference ? { title: { text: "Error" }, gridcolor: "#243849", zerolinecolor: "#536474", domain: [0, 0.23] } : undefined,
   };
+
+  const convergenceLayout: Partial<Layout> = {
+    ...commonLayout,
+    xaxis: { title: { text: "Paths" }, type: "log", gridcolor: "#243849", zerolinecolor: "#536474" },
+    yaxis: { title: { text: "Price" }, gridcolor: "#243849", zerolinecolor: "#536474" },
+  };
+
+  const pathsLayout: Partial<Layout> = {
+    ...commonLayout,
+    xaxis: { title: { text: "Time (years)" }, gridcolor: "#243849", zerolinecolor: "#536474" },
+    yaxis: { title: { text: "Spot" }, gridcolor: "#243849", zerolinecolor: "#536474" },
+  };
+
+  const plotData = visibleTab === "surface" ? surfaceData : visibleTab === "slice" ? sliceData : visibleTab === "convergence" ? convergenceData : pathsData;
+  const plotLayout = visibleTab === "surface" ? surfaceLayout : visibleTab === "slice" ? sliceLayout : visibleTab === "convergence" ? convergenceLayout : pathsLayout;
 
   return (
     <div className="chart-content">
       <div className="chart-heading-row">
         <h2>Price surface</h2>
-        <span className="method-legend"><span />Closed form</span>
+        {response ? (
+          <label className="active-method-select">
+            <span>Active method</span>
+            <select aria-label="Active method" value={activeResult?.method ?? activeMethod} onChange={(event) => onActiveMethodChange(event.currentTarget.value as SolverMethod)}>
+              {response.results.map((result) => <option key={result.method} value={result.method}>{methodLabels[result.method]}</option>)}
+            </select>
+          </label>
+        ) : null}
       </div>
       <div className="chart-tabs" role="tablist" aria-label="Visualization">
-        <button role="tab" aria-selected={tab === "surface"} className={tab === "surface" ? "active" : ""} onClick={() => setTab("surface")}>Surface</button>
-        <button role="tab" aria-selected={tab === "slice"} className={tab === "slice" ? "active" : ""} onClick={() => setTab("slice")}>Price slice</button>
-        <button role="tab" disabled title="Available with Monte Carlo in Phase 2">Convergence</button>
-        <button role="tab" disabled title="Available with Monte Carlo in Phase 2">Paths</button>
+        <button role="tab" aria-selected={visibleTab === "surface"} className={visibleTab === "surface" ? "active" : ""} onClick={() => setTab("surface")}>Surface</button>
+        <button role="tab" aria-selected={visibleTab === "slice"} className={visibleTab === "slice" ? "active" : ""} onClick={() => setTab("slice")}>Price slice</button>
+        <button role="tab" aria-selected={visibleTab === "convergence"} className={visibleTab === "convergence" ? "active" : ""} disabled={!monteCarlo} onClick={() => setTab("convergence")}>Convergence</button>
+        <button role="tab" aria-selected={visibleTab === "paths"} className={visibleTab === "paths" ? "active" : ""} disabled={!monteCarlo} onClick={() => setTab("paths")}>Paths</button>
       </div>
 
       <div className={`chart-stage ${loading ? "loading" : ""}`} aria-busy={loading}>
-        {result ? (
-          <Plot
-            data={tab === "surface" ? surfaceData : sliceData}
-            layout={tab === "surface" ? surfaceLayout : sliceLayout}
-            config={plotConfig}
-            useResizeHandler
-            style={{ width: "100%", height: "100%" }}
-          />
+        {activeResult ? (
+          <Plot data={plotData} layout={plotLayout} config={plotConfig} useResizeHandler style={{ width: "100%", height: "100%" }} />
         ) : (
           <div className="chart-empty">
             <span className="status-spinner" />
@@ -135,18 +287,19 @@ export function ChartPanel({ result, loading }: { result: SolveResult | null; lo
         )}
       </div>
 
-      {result ? (
+      {activeResult && (visibleTab === "surface" || visibleTab === "slice") ? (
         <label className="slice-control">
-          <span>Slice at τ = {result.surface.times_to_maturity[selectedIndex].toFixed(2)} yr</span>
+          <span>Slice at τ = {activeResult.surface.times_to_maturity[selectedIndex].toFixed(2)} yr</span>
           <input
             type="range"
             min={0}
-            max={result.surface.times_to_maturity.length - 1}
+            max={activeResult.surface.times_to_maturity.length - 1}
             value={selectedIndex}
             onChange={(event) => setSliceIndex(event.currentTarget.valueAsNumber)}
           />
         </label>
       ) : null}
+      {visibleTab === "paths" ? <p className="chart-note">Displayed paths are a small sample, not the full pricing population.</p> : null}
     </div>
   );
 }

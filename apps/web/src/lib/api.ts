@@ -1,11 +1,17 @@
-import type { SolveResult, SolverParameters } from "../types";
+import type { Capabilities, SolveResponse, SolverParameters } from "../types";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000";
+const API_BASE_URL = import.meta.env.VITE_SOLVER_API_URL ?? import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000";
+
+export async function getCapabilities(signal?: AbortSignal): Promise<Capabilities> {
+  const response = await fetch(`${API_BASE_URL}/v1/capabilities`, { signal });
+  if (!response.ok) throw new Error(`Capabilities returned HTTP ${response.status}`);
+  return response.json() as Promise<Capabilities>;
+}
 
 export async function solveEuropean(
   parameters: SolverParameters,
   signal?: AbortSignal,
-): Promise<SolveResult> {
+): Promise<SolveResponse> {
   const response = await fetch(`${API_BASE_URL}/v1/solve`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -13,7 +19,7 @@ export async function solveEuropean(
     body: JSON.stringify({
       option_family: "european",
       option_side: parameters.optionSide,
-      method: "closed_form",
+      methods: parameters.methods,
       market: {
         spot: parameters.spot,
         strike: parameters.strike,
@@ -28,6 +34,18 @@ export async function solveEuropean(
         spot_steps: parameters.spotSteps,
         time_steps: parameters.timeSteps,
       },
+      finite_difference: {
+        spot_steps: parameters.finiteDifferenceSpotSteps,
+        time_steps: parameters.finiteDifferenceTimeSteps,
+        domain_max: parameters.finiteDifferenceDomainMax,
+      },
+      monte_carlo: {
+        paths: parameters.monteCarloPaths,
+        steps: parameters.monteCarloSteps,
+        seed: parameters.monteCarloSeed,
+        antithetic: parameters.monteCarloAntithetic,
+        confidence_level: parameters.confidenceLevel,
+      },
     }),
   });
 
@@ -36,6 +54,5 @@ export async function solveEuropean(
     throw new Error(detail || `Solver returned HTTP ${response.status}`);
   }
 
-  return response.json() as Promise<SolveResult>;
+  return response.json() as Promise<SolveResponse>;
 }
-

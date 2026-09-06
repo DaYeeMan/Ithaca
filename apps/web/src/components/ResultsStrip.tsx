@@ -1,25 +1,48 @@
 import { CircleCheck, Timer } from "lucide-react";
-import type { SolveResult } from "../types";
+import type { SolveResponse, SolverMethod } from "../types";
 
-export function ResultsStrip({ result, status }: { result: SolveResult | null; status: "idle" | "solving" | "error" }) {
+const labels: Record<SolverMethod, string> = {
+  closed_form: "Closed form",
+  finite_difference: "Finite difference",
+  monte_carlo: "Monte Carlo",
+};
+
+function formatError(value: number | null | undefined): string {
+  if (value == null) return "—";
+  if (value === 0) return "Exact";
+  return value < 0.001 ? value.toExponential(2) : value.toFixed(4);
+}
+
+export function ResultsStrip({
+  response,
+  activeMethod,
+  status,
+}: {
+  response: SolveResponse | null;
+  activeMethod: SolverMethod;
+  status: "idle" | "solving" | "error";
+}) {
+  const result = response?.results.find((candidate) => candidate.method === activeMethod) ?? response?.results[0] ?? null;
+  const interval = result?.confidence_interval;
+
   return (
     <section className="results-strip" aria-label="Results">
-      <div className="results-heading">Results</div>
+      <div className="results-heading">{result ? labels[result.method] : "Results"}</div>
       <div className="metric primary-metric">
         <span>Price</span>
         <strong>{result ? result.price.toFixed(4) : "—"}</strong>
       </div>
       <div className="metric">
         <span>Std. error</span>
-        <strong>—</strong>
+        <strong>{result?.standard_error != null ? result.standard_error.toFixed(4) : "—"}</strong>
       </div>
       <div className="metric">
-        <span>95% CI</span>
-        <strong>Closed form</strong>
+        <span>{interval ? `${(interval.level * 100).toFixed(0)}% CI` : "Confidence"}</span>
+        <strong>{interval ? `${interval.lower.toFixed(3)}–${interval.upper.toFixed(3)}` : "Deterministic"}</strong>
       </div>
       <div className="metric">
         <span>Reference error</span>
-        <strong className="success-value">Exact</strong>
+        <strong className={result?.reference_error === 0 ? "success-value" : ""}>{formatError(result?.reference_error)}</strong>
       </div>
       <div className="metric">
         <span>Runtime</span>
@@ -33,4 +56,3 @@ export function ResultsStrip({ result, status }: { result: SolveResult | null; s
     </section>
   );
 }
-

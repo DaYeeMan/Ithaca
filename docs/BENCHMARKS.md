@@ -1,6 +1,6 @@
 # Numerical Benchmark Specification
 
-Status: Phase 0 draft. European values are locked. Later-family expected values must be locked from independent reference implementations before each solver is implemented.
+Status: European Phase 2 gates are locked and passing. Later-family expected values must be locked from independent reference implementations before each solver is implemented.
 
 ## Conventions
 
@@ -11,6 +11,18 @@ Status: Phase 0 draft. European values are locked. Later-family expected values 
 - Report scalar prices to at least 8 decimal places internally.
 - UI rounding never changes comparison or acceptance calculations.
 - Seeded stochastic tests must be reproducible.
+
+## Phase 2 numerical conventions
+
+- Crank–Nicolson uses a uniform finite spot domain with analytical Dirichlet boundaries.
+- Central spatial differences are used except at convection-dominated nodes, where local upwind stabilization preserves monotonicity and non-negativity.
+- Default finite-difference grid: 241 spot nodes, 240 time steps, and `S_max = 300` for the baseline case.
+- Monte Carlo simulates exact geometric-Brownian terminal factors from aggregated seeded path increments.
+- Antithetic standard errors use independent pair means rather than treating paired samples as independent.
+- Confidence intervals use a two-sided normal critical value at the selected confidence level.
+- Surface nodes share random numbers. Convergence points use nested prefixes of the same sample.
+- Default Monte Carlo configuration: 20,000 paths, 64 path steps, seed 1729, antithetic sampling, and 95% confidence.
+- Requests are capped at 120,000,000 estimated operations.
 
 ## European Black–Scholes reference
 
@@ -136,4 +148,3 @@ Before implementing an option-family solver:
 3. Record tolerances before viewing production results.
 4. Add invariants and boundary cases, not only happy-path scalar values.
 5. Make the family benchmark suite pass before adding the next family.
-

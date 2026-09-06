@@ -1,13 +1,25 @@
-import { ChevronDown, FunctionSquare, Grid3X3 } from "lucide-react";
+import { ChevronDown, Dices, FunctionSquare, Grid3X3 } from "lucide-react";
+import { estimateOperations, MAX_ESTIMATED_OPERATIONS } from "../lib/validation";
+import type { SolverMethod, SolverParameters } from "../types";
 import { NumberField } from "./NumberField";
-import type { SolverParameters } from "../types";
 
 interface ProblemPanelProps {
   parameters: SolverParameters;
+  availableMethods: SolverMethod[];
   onChange: <Key extends keyof SolverParameters>(key: Key, value: SolverParameters[Key]) => void;
+  onToggleMethod: (method: SolverMethod) => void;
 }
 
-export function ProblemPanel({ parameters, onChange }: ProblemPanelProps) {
+const methodLabels: Record<SolverMethod, string> = {
+  closed_form: "Closed form",
+  finite_difference: "Finite difference",
+  monte_carlo: "Monte Carlo",
+};
+
+export function ProblemPanel({ parameters, availableMethods, onChange, onToggleMethod }: ProblemPanelProps) {
+  const estimatedOperations = estimateOperations(parameters);
+  const workPercent = estimatedOperations / MAX_ESTIMATED_OPERATIONS;
+
   return (
     <div className="problem-content">
       <h2>Problem</h2>
@@ -63,19 +75,58 @@ export function ProblemPanel({ parameters, onChange }: ProblemPanelProps) {
 
       <section className="control-section methods-section">
         <h3>Methods</h3>
-        <button type="button" className="method-row selected" aria-pressed="true">
-          <span><span className="radio-dot" />Closed form</span>
-          <FunctionSquare size={18} />
-        </button>
-        <button type="button" className="method-row" disabled title="Available in Phase 2">
-          <span><span className="radio-dot" />Finite difference</span>
-          <Grid3X3 size={18} />
-        </button>
-        <button type="button" className="method-row" disabled title="Available in Phase 2">
-          <span><span className="radio-dot" />Monte Carlo</span>
-          <span className="dots-icon">•••</span>
-        </button>
+        {availableMethods.map((method) => {
+          const selected = parameters.methods.includes(method);
+          const icon = method === "closed_form" ? <FunctionSquare size={18} />
+            : method === "finite_difference" ? <Grid3X3 size={18} /> : <Dices size={18} />;
+          return (
+            <button
+              key={method}
+              type="button"
+              className={`method-row ${selected ? "selected" : ""}`}
+              aria-pressed={selected}
+              onClick={() => onToggleMethod(method)}
+            >
+              <span><span className="radio-dot" />{methodLabels[method]}</span>
+              {icon}
+            </button>
+          );
+        })}
       </section>
+
+      {parameters.methods.includes("finite_difference") ? (
+        <section className="control-section numerical-section">
+          <h3>Finite difference <ChevronDown size={15} /></h3>
+          <NumberField label="Spot steps" value={parameters.finiteDifferenceSpotSteps} min={51} max={801} step={10} onChange={(value) => onChange("finiteDifferenceSpotSteps", value)} />
+          <NumberField label="Time steps" value={parameters.finiteDifferenceTimeSteps} min={20} max={2000} step={20} onChange={(value) => onChange("finiteDifferenceTimeSteps", value)} />
+          <NumberField label="Domain max" symbol="Sₘₐₓ" value={parameters.finiteDifferenceDomainMax} min={1} max={2_000_000} step={10} onChange={(value) => onChange("finiteDifferenceDomainMax", value)} />
+        </section>
+      ) : null}
+
+      {parameters.methods.includes("monte_carlo") ? (
+        <section className="control-section numerical-section">
+          <h3>Monte Carlo settings <ChevronDown size={15} /></h3>
+          <NumberField label="Paths" value={parameters.monteCarloPaths} min={1000} max={200000} step={1000} onChange={(value) => onChange("monteCarloPaths", value)} />
+          <NumberField label="Path steps" value={parameters.monteCarloSteps} min={1} max={512} step={8} onChange={(value) => onChange("monteCarloSteps", value)} />
+          <NumberField label="Seed" value={parameters.monteCarloSeed} min={0} max={2_147_483_647} step={1} onChange={(value) => onChange("monteCarloSeed", value)} />
+          <label className="toggle-field">
+            <span>Antithetic</span>
+            <input type="checkbox" checked={parameters.monteCarloAntithetic} onChange={(event) => onChange("monteCarloAntithetic", event.currentTarget.checked)} />
+          </label>
+          <label className="select-field">
+            <span>Confidence</span>
+            <select value={parameters.confidenceLevel} onChange={(event) => onChange("confidenceLevel", Number(event.currentTarget.value))}>
+              <option value={0.9}>90%</option>
+              <option value={0.95}>95%</option>
+              <option value={0.99}>99%</option>
+            </select>
+          </label>
+        </section>
+      ) : null}
+
+      <div className={`work-estimate ${workPercent > 0.8 ? "warning" : ""}`}>
+        Estimated work {(estimatedOperations / 1_000_000).toFixed(1)}M / 120M operations
+      </div>
     </div>
   );
 }

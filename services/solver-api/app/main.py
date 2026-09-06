@@ -5,8 +5,10 @@ import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.models import SolveRequest, SolveResult
+from app.models import MethodResult, SolveRequest, SolveResponse
 from app.solvers.black_scholes import MarketInputs, solve_surface
+from app.solvers.finite_difference import solve_finite_difference
+from app.solvers.monte_carlo import solve_monte_carlo
 
 
 def allowed_origins() -> list[str]:
@@ -17,7 +19,7 @@ def allowed_origins() -> list[str]:
     return [origin.strip() for origin in configured.split(",") if origin.strip()]
 
 
-app = FastAPI(title="Ithaca Solver API", version="0.1.0")
+app = FastAPI(title="Ithaca Solver API", version="0.2.0")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins(),
@@ -36,18 +38,38 @@ def health() -> dict[str, str]:
 def capabilities() -> dict[str, object]:
     return {
         "option_families": [
-            {"id": "european", "status": "available"},
-            {"id": "american", "status": "planned"},
-            {"id": "barrier", "status": "planned"},
-            {"id": "asian", "status": "planned"},
+            {"id": "european", "status": "available", "methods": ["closed_form", "finite_difference", "monte_carlo"]},
+            {"id": "american", "status": "planned", "methods": []},
+            {"id": "barrier", "status": "planned", "methods": []},
+            {"id": "asian", "status": "planned", "methods": []},
         ],
-        "methods": [{"id": "closed_form", "status": "available"}],
-        "limits": {"spot_steps": 160, "time_steps": 160},
+        "methods": [
+            {"id": "closed_form", "status": "available"},
+            {"id": "finite_difference", "status": "available", "scheme": "Crank-Nicolson"},
+            {"id": "monte_carlo", "status": "available", "sampling": "risk-neutral GBM"},
+        ],
+        "limits": {
+            "surface_spot_steps": {"minimum": 20, "maximum": 160},
+            "surface_time_steps": {"minimum": 20, "maximum": 160},
+            "finite_difference_spot_steps": {"minimum": 51, "maximum": 801},
+            "finite_difference_time_steps": {"minimum": 20, "maximum": 2_000},
+            "monte_carlo_paths": {"minimum": 1_000, "maximum": 200_000},
+            "monte_carlo_steps": {"minimum": 1, "maximum": 512},
+            "total_estimated_operations": 120_000_000,
+            "default_runtime_seconds": 5,
+            "advanced_runtime_seconds": 30,
+        },
+        "execution": {
+            "transport": "synchronous_http",
+            "progress": "method-level indeterminate",
+            "cancellation": "client abort",
+            "error_format": "FastAPI validation detail or HTTP error body",
+        },
     }
 
 
-@app.post("/v1/solve", response_model=SolveResult)
-def solve(request: SolveRequest) -> SolveResult:
+@app.post("/v1/solve", response_model=SolveResponse)
+def solve(request: SolveRequest) -> SolveResponse:
     market = MarketInputs(
         spot=request.market.spot,
         strike=request.market.strike,
@@ -56,7 +78,7 @@ def solve(request: SolveRequest) -> SolveResult:
         rate=request.market.rate,
         dividend=request.market.dividend,
     )
-    result = solve_surface(
+    closed_form = solve_surface(
         inputs=market,
         side=request.option_side,
         spot_min=request.surface.spot_min,
@@ -64,4 +86,52 @@ def solve(request: SolveRequest) -> SolveResult:
         spot_steps=request.surface.spot_steps,
         time_steps=request.surface.time_steps,
     )
-    return SolveResult(**result)
+    reference_price = float(closed_form["price"])
+    results: list[MethodResult] = []
+
+    for method in request.methods:
+        if method == "closed_form":
+            raw_result = {
+                **closed_form,
+                "method": "closed_form",
+                "reference_error": 0.0,
+                "diagnostics": {"solution": "analytical Black-Scholes"},
+            }
+        elif method == "finite_difference":
+            settings = request.finite_difference
+            raw_result = solve_finite_difference(
+                inputs=market,
+                side=request.option_side,
+                surface_spot_min=request.surface.spot_min,
+                surface_spot_max=request.surface.spot_max,
+                surface_spot_steps=request.surface.spot_steps,
+                surface_time_steps=request.surface.time_steps,
+                grid_spot_steps=settings.spot_steps,
+                grid_time_steps=settings.time_steps,
+                domain_max=settings.domain_max,
+            )
+            raw_result["reference_error"] = abs(float(raw_result["price"]) - reference_price)
+        else:
+            settings = request.monte_carlo
+            raw_result = solve_monte_carlo(
+                inputs=market,
+                side=request.option_side,
+                surface_spot_min=request.surface.spot_min,
+                surface_spot_max=request.surface.spot_max,
+                surface_spot_steps=request.surface.spot_steps,
+                surface_time_steps=request.surface.time_steps,
+                paths=settings.paths,
+                steps=settings.steps,
+                seed=settings.seed,
+                antithetic=settings.antithetic,
+                confidence_level=settings.confidence_level,
+            )
+            raw_result["reference_error"] = abs(float(raw_result["price"]) - reference_price)
+        results.append(MethodResult(**raw_result))
+
+    warnings = [warning for result in results for warning in result.warnings]
+    return SolveResponse(
+        results=results,
+        estimated_operations=request.estimated_operations(),
+        warnings=warnings,
+    )

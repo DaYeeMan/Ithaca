@@ -30,10 +30,12 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 }
 
 .app-shell {
+  height: 100svh;
   min-height: 100svh;
+  overflow: hidden;
   display: grid;
   grid-template-columns: 310px minmax(520px, 1fr) 340px;
-  grid-template-rows: 68px minmax(610px, 1fr) 132px 42px;
+  grid-template-rows: 68px minmax(0, 1fr) 132px 42px;
   grid-template-areas:
     "header header header"
     "problem chart equation"
@@ -57,16 +59,6 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 .wordmark { font: 38px/1 var(--serif); letter-spacing: -0.03em; margin-right: 8px; }
 .icon-button { display: grid; place-items: center; border: 0; background: transparent; padding: 7px; cursor: pointer; }
 .menu-button { margin-left: -8px; }
-.preset-select {
-  width: 245px;
-  height: 40px;
-  color: var(--text);
-  border: 1px solid var(--line);
-  border-radius: 4px;
-  background: var(--surface);
-  padding: 0 12px;
-  font-size: 14px;
-}
 .topbar-actions { margin-left: auto; display: flex; gap: 12px; }
 .secondary-button, .solve-button {
   height: 40px;
@@ -84,6 +76,7 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 .secondary-button { background: transparent; }
 .solve-button { background: var(--cyan); border-color: var(--cyan); color: #00151d; }
 .solve-button:disabled { opacity: 0.55; cursor: progress; }
+.solve-button.cancel { background: transparent; border-color: var(--amber); color: #ffd16b; }
 
 .desktop-rail { min-height: 0; overflow: auto; scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
 .problem-panel { grid-area: problem; border-right: 1px solid var(--line); }
@@ -118,6 +111,15 @@ h2 { margin: 0; font: 23px/1.2 var(--serif); font-weight: 400; }
   background: #071522;
 }
 .select-field select { padding: 0 10px; }
+.toggle-field {
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #dce4e9;
+  font-size: 13px;
+}
+.toggle-field input { width: 18px; height: 18px; accent-color: var(--cyan); }
 .number-label i { font-family: var(--serif); font-size: 14px; }
 .number-control { display: flex; align-items: stretch; overflow: hidden; }
 .number-control input { min-width: 0; flex: 1; color: var(--text); border: 0; background: transparent; padding: 0 9px; }
@@ -143,28 +145,34 @@ h2 { margin: 0; font: 23px/1.2 var(--serif); font-weight: 400; }
 .radio-dot { width: 16px; height: 16px; border: 1px solid currentColor; border-radius: 50%; position: relative; }
 .selected .radio-dot::after { content: ""; position: absolute; inset: 4px; border-radius: 50%; background: var(--cyan); }
 .dots-icon { letter-spacing: 2px; }
+.numerical-section { padding-top: 2px; border-top: 1px solid var(--line-soft); }
+.work-estimate { margin: 18px 0 2px; color: var(--muted); font-size: 11px; line-height: 1.4; }
+.work-estimate.warning { color: var(--amber); }
 
 .chart-panel { grid-area: chart; min-width: 0; min-height: 0; position: relative; }
-.chart-content { height: 100%; min-height: 610px; display: flex; flex-direction: column; padding: 18px 22px 12px; }
+.chart-content { height: 100%; min-height: 0; display: flex; flex-direction: column; padding: 18px 22px 12px; }
 .chart-heading-row { display: flex; align-items: center; justify-content: space-between; }
+.active-method-select { display: flex; align-items: center; gap: 9px; color: var(--muted); font-size: 12px; }
+.active-method-select select { height: 32px; color: var(--text); border: 1px solid var(--line); border-radius: 4px; background: var(--surface); padding: 0 9px; }
 .method-legend { display: flex; align-items: center; gap: 7px; color: var(--muted); font-size: 12px; }
 .method-legend span { width: 9px; height: 9px; border-radius: 50%; background: var(--cyan); }
 .chart-tabs { display: flex; gap: 28px; margin-top: 12px; border-bottom: 1px solid var(--line); }
 .chart-tabs button { border: 0; border-bottom: 2px solid transparent; background: transparent; padding: 10px 2px 11px; color: #d7dfe5; cursor: pointer; font-size: 13px; }
 .chart-tabs button.active { color: var(--cyan-soft); border-bottom-color: var(--cyan); }
 .chart-tabs button:disabled { color: #62717c; cursor: not-allowed; }
-.chart-stage { flex: 1; min-height: 445px; position: relative; opacity: 1; transition: opacity 160ms ease; }
+.chart-stage { flex: 1; min-height: 0; position: relative; opacity: 1; transition: opacity 160ms ease; }
 .chart-stage.loading { opacity: 0.62; }
 .chart-empty, .chart-loading { height: 100%; min-height: 420px; display: grid; place-content: center; justify-items: center; gap: 12px; color: var(--muted); }
 .status-spinner { width: 22px; height: 22px; border: 2px dotted var(--cyan); border-radius: 50%; display: inline-block; animation: spin 1.2s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .slice-control { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 16px; color: var(--muted); font-size: 12px; border-top: 1px solid var(--line-soft); padding-top: 10px; }
 .slice-control input { accent-color: var(--cyan); }
+.chart-note { margin: 4px 0 0; color: var(--muted); font-size: 11px; }
 .app-message { position: absolute; left: 22px; right: 22px; bottom: 12px; padding: 9px 12px; border: 1px solid rgba(255, 176, 0, 0.6); background: rgba(46, 31, 3, 0.95); color: #ffd16b; font-size: 12px; z-index: 6; }
 
 .equation-content section { margin-top: 20px; padding-bottom: 18px; border-bottom: 1px solid var(--line-soft); }
 .equation-content section:last-child { border: 0; }
-.equation-content .katex-display { margin: 12px 0; overflow-x: auto; overflow-y: hidden; text-align: left; font-size: 0.86rem; }
+.equation-content .katex-display { margin: 12px 0; overflow-x: hidden; overflow-y: hidden; text-align: left; font-size: 0.78rem; }
 .equation-content .katex-display > .katex { text-align: left; }
 .equation-content p { color: #d4dce1; font: 15px/1.65 var(--serif); margin: 0; }
 .equation-content .equation-note { margin-top: 12px; color: var(--muted); font-size: 13px; }
@@ -205,7 +213,9 @@ h2 { margin: 0; font: 23px/1.2 var(--serif); font-weight: 400; }
   body { overflow-x: hidden; }
   .app-shell {
     display: grid;
+    height: auto;
     min-height: 100svh;
+    overflow: visible;
     grid-template-columns: 1fr;
     grid-template-rows: 64px minmax(550px, auto) auto 84px;
     grid-template-areas: "header" "chart" "results" "mobile-nav";
@@ -214,11 +224,12 @@ h2 { margin: 0; font: 23px/1.2 var(--serif); font-weight: 400; }
   .topbar { padding: 0 14px; gap: 10px; }
   .wordmark { font-size: 31px; }
   .menu-button, .secondary-button { display: none; }
-  .preset-select { flex: 1; width: auto; max-width: 200px; margin-left: auto; }
   .solve-button { min-width: 90px; }
   .desktop-rail, .status-footer { display: none; }
   .chart-content { min-height: 550px; padding: 18px 14px 10px; }
   .chart-heading-row h2 { font-size: 25px; }
+  .active-method-select span { display: none; }
+  .active-method-select select { max-width: 160px; }
   .method-legend { display: none; }
   .chart-tabs { gap: 24px; overflow-x: auto; }
   .chart-tabs button { white-space: nowrap; font-size: 14px; }
@@ -230,7 +241,7 @@ h2 { margin: 0; font: 23px/1.2 var(--serif); font-weight: 400; }
     padding: 0;
     min-height: 118px;
   }
-  .results-heading, .results-strip > .metric:nth-of-type(2), .results-strip > .metric:nth-of-type(4), .status-block { display: none; }
+  .results-heading, .results-strip > .metric:nth-child(3), .results-strip > .metric:nth-child(4), .status-block { display: none; }
   .results-strip > .metric { display: flex; height: 82px; border-left: 1px solid var(--line); padding: 0 14px; }
   .results-strip > .metric:first-of-type { border-left: 0; }
   .primary-metric strong { font-size: 25px; }
@@ -264,9 +275,11 @@ h2 { margin: 0; font: 23px/1.2 var(--serif); font-weight: 400; }
   .sheet-handle { position: sticky; top: 7px; z-index: 2; width: 48px; height: 5px; border-radius: 4px; background: #788693; margin: 7px auto -12px; }
   .sheet-close { position: absolute; top: 28px; right: 18px; border: 0; background: transparent; padding: 8px; z-index: 3; }
   .mobile-sheet .problem-content, .mobile-sheet .equation-content { padding: 30px 20px 100px; }
+  .mobile-sheet .equation-content .katex-display { overflow-x: auto; font-size: 0.86rem; }
   .mobile-sheet h2 { font-size: 28px; margin-bottom: 22px; }
   .mobile-sheet .select-field, .mobile-sheet .number-field { grid-template-columns: minmax(100px, 1fr) minmax(160px, 1.2fr); min-height: 54px; font-size: 15px; }
   .mobile-sheet .select-field select, .mobile-sheet .number-control { height: 44px; }
+  .mobile-sheet .toggle-field { min-height: 52px; font-size: 15px; }
   .mobile-sheet .range-row { grid-template-columns: 1fr 76px 12px 76px; min-height: 50px; }
   .mobile-sheet > .results-strip { display: grid; grid-template-columns: 1fr; padding: 34px 20px 110px; border: 0; }
   .mobile-sheet > .results-strip > .metric { display: flex; border-left: 0; border-bottom: 1px solid var(--line-soft); }

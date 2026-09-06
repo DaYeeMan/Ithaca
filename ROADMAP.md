@@ -8,27 +8,28 @@ This file tracks unfinished product work. `PROJECT_PLAN.md` remains the source o
 - [x] Phase 1 implementation: European call/put closed form, API validation, 3D surface, 2D price slice, equation inspector, and results
 - [x] Phase 1 automated checks: Black–Scholes benchmarks, parity, surface shape, terminal payoff, frontend validation, lint, and production build
 - [x] Phase 1 desktop browser QA: call/put solve flow, surface/slice interaction, equations, error-free console, and concept comparison
-- [ ] Phase 1 mobile browser QA at 390 × 844 and one wider mobile viewport
+- [x] Phase 1 mobile browser QA at 390 × 844 and 768 × 1024
+- [x] Phase 2: Crank–Nicolson and seeded Monte Carlo comparison, diagnostics, compute limits, cancellation, and browser QA
 
-## Next: Phase 2 — numerical comparison
+## Phase 2 — numerical comparison
 
 Numerical work must satisfy the European gates already defined in `docs/BENCHMARKS.md`.
 
-- [ ] Define API contracts for method settings, diagnostics, progress, cancellation, and errors
-- [ ] Add work estimator and caps for grid cells, paths, steps, and total operations
-- [ ] Implement Crank–Nicolson finite differences with documented boundary handling
-- [ ] Test finite-difference accuracy, stability, boundaries, and grid refinement
-- [ ] Implement seeded risk-neutral Monte Carlo
-- [ ] Add path count, step count, seed, confidence level, and antithetic controls
-- [ ] Test reproducibility, confidence intervals, convergence, and standard-error scaling
-- [ ] Add finite-difference and Monte Carlo capability metadata to the API
-- [ ] Enable only methods valid for the selected contract
-- [ ] Render method overlays and difference charts
-- [ ] Render Monte Carlo confidence bands, convergence, and optional sample paths
-- [ ] Preserve the last successful result during cancellation or request failure
-- [ ] Meet default runtime budget under 5 seconds; cap advanced runs at 30 seconds
+- [x] Define API contracts for method settings, diagnostics, progress, cancellation, and errors
+- [x] Add work estimator and caps for grid cells, paths, steps, and total operations
+- [x] Implement Crank–Nicolson finite differences with documented boundary handling
+- [x] Test finite-difference accuracy, stability, boundaries, and grid refinement
+- [x] Implement seeded risk-neutral Monte Carlo
+- [x] Add path count, step count, seed, confidence level, and antithetic controls
+- [x] Test reproducibility, confidence intervals, convergence, and standard-error scaling
+- [x] Add finite-difference and Monte Carlo capability metadata to the API
+- [x] Enable only methods valid for the selected contract
+- [x] Render method overlays and difference charts
+- [x] Render Monte Carlo confidence bands, convergence, and optional sample paths
+- [x] Preserve the last successful result during cancellation or request failure
+- [x] Meet default runtime budget under 5 seconds; cap advanced runs at 30 seconds
 
-Phase 2 exit: closed form, finite difference, and Monte Carlo agree within documented European tolerances.
+Phase 2 exit: closed form, finite difference, and Monte Carlo agree within documented European tolerances. Passed.
 
 ## Later option families
 

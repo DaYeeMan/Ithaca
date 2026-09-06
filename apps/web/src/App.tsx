@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useEffect, useState, useTransition } from "react";
+import { lazy, Suspense, useCallback, useEffect, useRef, useState, useTransition } from "react";
 import {
   BarChart3,
   FunctionSquare,
@@ -11,14 +11,17 @@ import {
 import { EquationPanel } from "./components/EquationPanel";
 import { ProblemPanel } from "./components/ProblemPanel";
 import { ResultsStrip } from "./components/ResultsStrip";
-import { solveEuropean } from "./lib/api";
+import { getCapabilities, solveEuropean } from "./lib/api";
 import { validateParameters } from "./lib/validation";
-import type { SolveResult, SolverParameters } from "./types";
+import type { Capabilities, SolveResponse, SolverMethod, SolverParameters } from "./types";
 
 const ChartPanel = lazy(() => import("./components/ChartPanel").then((module) => ({ default: module.ChartPanel })));
 
+const ALL_METHODS: SolverMethod[] = ["closed_form", "finite_difference", "monte_carlo"];
+
 const DEFAULT_PARAMETERS: SolverParameters = {
   optionSide: "call",
+  methods: ALL_METHODS,
   spot: 100,
   strike: 100,
   maturity: 1,
@@ -29,6 +32,14 @@ const DEFAULT_PARAMETERS: SolverParameters = {
   spotMax: 300,
   spotSteps: 61,
   timeSteps: 51,
+  finiteDifferenceSpotSteps: 241,
+  finiteDifferenceTimeSteps: 240,
+  finiteDifferenceDomainMax: 300,
+  monteCarloPaths: 20_000,
+  monteCarloSteps: 64,
+  monteCarloSeed: 1_729,
+  monteCarloAntithetic: true,
+  confidenceLevel: 0.95,
 };
 
 type Status = "idle" | "solving" | "error";
@@ -36,23 +47,32 @@ type MobilePanel = "problem" | "equation" | "results" | null;
 
 export default function App() {
   const [parameters, setParameters] = useState<SolverParameters>(DEFAULT_PARAMETERS);
-  const [result, setResult] = useState<SolveResult | null>(null);
+  const [response, setResponse] = useState<SolveResponse | null>(null);
+  const [capabilities, setCapabilities] = useState<Capabilities | null>(null);
+  const [activeMethod, setActiveMethod] = useState<SolverMethod>("closed_form");
   const [status, setStatus] = useState<Status>("solving");
   const [message, setMessage] = useState<string | null>(null);
-  const [mobilePanel, setMobilePanel] = useState<MobilePanel>("problem");
+  const [mobilePanel, setMobilePanel] = useState<MobilePanel>(null);
+  const activeRequest = useRef<AbortController | null>(null);
   const [, startTransition] = useTransition();
 
   useEffect(() => {
     const controller = new AbortController();
+    activeRequest.current = controller;
+    getCapabilities(controller.signal).then(setCapabilities).catch(() => undefined);
     solveEuropean(DEFAULT_PARAMETERS, controller.signal)
-      .then((nextResult) => {
-        startTransition(() => setResult(nextResult));
+      .then((nextResponse) => {
+        startTransition(() => setResponse(nextResponse));
         setStatus("idle");
+        setMessage(nextResponse.warnings[0] ?? null);
       })
       .catch((error: unknown) => {
         if (controller.signal.aborted) return;
         setStatus("error");
         setMessage(error instanceof Error ? "Solver API is unavailable. Start it on port 8000, then press Solve." : "Solver request failed.");
+      })
+      .finally(() => {
+        if (activeRequest.current === controller) activeRequest.current = null;
       });
     return () => controller.abort();
   }, []);
@@ -65,6 +85,27 @@ export default function App() {
     setMessage(null);
   }, []);
 
+  const toggleMethod = useCallback((method: SolverMethod) => {
+    const selected = parameters.methods.includes(method);
+    if (selected && parameters.methods.length === 1) {
+      setMessage("Select at least one solution method.");
+      return;
+    }
+    const methods = selected
+      ? parameters.methods.filter((candidate) => candidate !== method)
+      : ALL_METHODS.filter((candidate) => parameters.methods.includes(candidate) || candidate === method);
+    setParameters((current) => ({ ...current, methods }));
+    if (!methods.includes(activeMethod)) setActiveMethod(methods[0]);
+    setMessage(null);
+  }, [activeMethod, parameters.methods]);
+
+  const cancelSolve = useCallback(() => {
+    activeRequest.current?.abort();
+    activeRequest.current = null;
+    setStatus("idle");
+    setMessage("Calculation cancelled. Last successful result remains visible.");
+  }, []);
+
   const runSolve = useCallback(async () => {
     const validationMessage = validateParameters(parameters);
     if (validationMessage) {
@@ -72,62 +113,75 @@ export default function App() {
       return;
     }
 
+    activeRequest.current?.abort();
+    const controller = new AbortController();
+    activeRequest.current = controller;
     setStatus("solving");
     setMessage(null);
     try {
-      const nextResult = await solveEuropean(parameters);
-      startTransition(() => setResult(nextResult));
+      const nextResponse = await solveEuropean(parameters, controller.signal);
+      startTransition(() => setResponse(nextResponse));
       setStatus("idle");
-    } catch {
+      setMessage(nextResponse.warnings[0] ?? null);
+      if (!nextResponse.results.some((result) => result.method === activeMethod)) {
+        setActiveMethod(nextResponse.results[0].method);
+      }
+    } catch (error) {
+      if (controller.signal.aborted) return;
       setStatus("error");
-      setMessage("Solver API is unavailable. The last successful result remains visible.");
+      setMessage(error instanceof Error && error.message.includes("operation budget")
+        ? "Requested work exceeds the server operation budget."
+        : "Solver request failed. Last successful result remains visible.");
+    } finally {
+      if (activeRequest.current === controller) activeRequest.current = null;
     }
-  }, [parameters]);
+  }, [activeMethod, parameters]);
 
   const reset = useCallback(() => {
     setParameters(DEFAULT_PARAMETERS);
+    setActiveMethod("closed_form");
     setMessage(null);
   }, []);
+
+  const availableMethods = capabilities?.option_families.find((family) => family.id === "european")?.methods ?? ALL_METHODS;
 
   return (
     <main className="app-shell">
       <header className="topbar">
         <button className="icon-button menu-button" aria-label="Open navigation"><Menu /></button>
         <div className="wordmark">Ithaca</div>
-        <select
-          className="preset-select"
-          aria-label="Preset"
-          value={parameters.optionSide}
-          onChange={(event) => changeParameter("optionSide", event.currentTarget.value as "call" | "put")}
-        >
-          <option value="call">European Call</option>
-          <option value="put">European Put</option>
-        </select>
         <div className="topbar-actions">
           <button className="secondary-button" type="button" onClick={reset}><RotateCcw size={17} />Reset</button>
-          <button className="solve-button" type="button" onClick={runSolve} disabled={status === "solving"}><Play size={18} fill="currentColor" />Solve</button>
+          <button
+            className={`solve-button ${status === "solving" ? "cancel" : ""}`}
+            type="button"
+            onClick={status === "solving" ? cancelSolve : runSolve}
+          >
+            {status === "solving" ? <X size={18} /> : <Play size={18} fill="currentColor" />}
+            {status === "solving" ? "Cancel" : "Solve"}
+          </button>
         </div>
       </header>
 
       <aside className="problem-panel desktop-rail">
-        <ProblemPanel parameters={parameters} onChange={changeParameter} />
+        <ProblemPanel parameters={parameters} availableMethods={availableMethods} onChange={changeParameter} onToggleMethod={toggleMethod} />
       </aside>
 
       <section className="chart-panel">
         <Suspense fallback={<div className="chart-loading"><span className="status-spinner" />Loading visualization…</div>}>
-          <ChartPanel result={result} loading={status === "solving"} />
+          <ChartPanel response={response} activeMethod={activeMethod} onActiveMethodChange={setActiveMethod} loading={status === "solving"} />
         </Suspense>
         {message ? <div className="app-message" role="alert">{message}</div> : null}
       </section>
 
       <aside className="equation-panel desktop-rail">
-        <EquationPanel side={parameters.optionSide} />
+        <EquationPanel side={parameters.optionSide} method={activeMethod} />
       </aside>
 
-      <ResultsStrip result={result} status={status} />
+      <ResultsStrip response={response} activeMethod={activeMethod} status={status} />
 
       <footer className="status-footer">
-        <span>Model: Black–Scholes</span><span>Currency: USD</span><span>Phase 1 · Closed form</span>
+        <span>Model: Black–Scholes</span><span>Currency: USD</span><span>Phase 2 · Numerical comparison</span>
       </footer>
 
       <nav className="mobile-nav" aria-label="Workbench panels">
@@ -140,12 +194,11 @@ export default function App() {
         <section className="mobile-sheet" aria-label={`${mobilePanel} panel`}>
           <div className="sheet-handle" />
           <button className="sheet-close" aria-label="Close panel" onClick={() => setMobilePanel(null)}><X /></button>
-          {mobilePanel === "problem" ? <ProblemPanel parameters={parameters} onChange={changeParameter} /> : null}
-          {mobilePanel === "equation" ? <EquationPanel side={parameters.optionSide} /> : null}
-          {mobilePanel === "results" ? <ResultsStrip result={result} status={status} /> : null}
+          {mobilePanel === "problem" ? <ProblemPanel parameters={parameters} availableMethods={availableMethods} onChange={changeParameter} onToggleMethod={toggleMethod} /> : null}
+          {mobilePanel === "equation" ? <EquationPanel side={parameters.optionSide} method={activeMethod} /> : null}
+          {mobilePanel === "results" ? <ResultsStrip response={response} activeMethod={activeMethod} status={status} /> : null}
         </section>
       ) : null}
     </main>
   );
 }
-

@@ -87,10 +87,11 @@ Option-specific labels, equations, conditions, warnings, metrics, and form label
 - Progress and cancellation state
 - Mobile bottom-sheet navigation
 
-## Phase 1 implementation notes
+## Implementation notes
 
-- Closed form is the only enabled method.
+- Closed form, finite difference, and Monte Carlo are enabled for European contracts.
 - European call and put are the only enabled contracts.
-- Planned methods and option families remain visible but disabled, preserving the accepted workbench structure.
+- Planned option families remain visible but disabled, preserving the accepted workbench structure.
 - Plotly loads through a lazy React boundary to keep the initial application bundle separate from the chart bundle.
 - Mobile keeps the chart first and exposes Problem, Equation, and Results through bottom-sheet navigation.
+- Price slices compare methods and show reference errors; Monte Carlo views show confidence, convergence, and sample paths.
