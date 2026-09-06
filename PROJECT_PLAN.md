@@ -401,4 +401,4 @@ Exit: production deployment meets correctness, accessibility, and performance ga
 - Monte Carlo: include an optional sample-path chart plus price surface, confidence bands, and convergence.
 - Compute budget: default runs under 5 seconds; explicitly gated advanced runs may take up to 30 seconds.
 
-Planning decisions are complete. Next gate is benchmark selection and visual-concept approval; implementation must not begin before both are recorded.
+Planning decisions, European benchmarks, and visual concepts are approved. Phase 1 is implemented; `ROADMAP.md` tracks remaining QA and later phases.

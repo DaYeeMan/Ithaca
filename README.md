@@ -38,5 +38,6 @@ npm run build:web
 ## Project documents
 
 - [PROJECT_PLAN.md](./PROJECT_PLAN.md): product scope, architecture, phases, and acceptance criteria
+- [ROADMAP.md](./ROADMAP.md): current status and implementation checklist
 - [docs/BENCHMARKS.md](./docs/BENCHMARKS.md): numerical reference cases and accuracy gates
 - [docs/DESIGN_SPEC_DRAFT.md](./docs/DESIGN_SPEC_DRAFT.md): approved visual system and responsive composition
