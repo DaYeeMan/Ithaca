@@ -53,8 +53,16 @@ class BinomialSettings(BaseModel):
     steps: int = Field(default=800, ge=50, le=4_000)
 
 
+class BarrierSettings(BaseModel):
+    direction: Literal["down", "up"] = "down"
+    style: Literal["in", "out"] = "out"
+    level: float = Field(default=90, gt=0, le=1_000_000)
+    monitoring: Literal["continuous"] = "continuous"
+    rebate: Literal[0] = 0
+
+
 class SolveRequest(BaseModel):
-    option_family: Literal["european", "american"]
+    option_family: Literal["european", "american", "barrier"]
     option_side: Literal["call", "put"]
     methods: list[SolverMethod] = Field(min_length=1, max_length=3)
     market: MarketParameters
@@ -62,15 +70,16 @@ class SolveRequest(BaseModel):
     finite_difference: FiniteDifferenceSettings = Field(default_factory=FiniteDifferenceSettings)
     monte_carlo: MonteCarloSettings = Field(default_factory=MonteCarloSettings)
     binomial: BinomialSettings = Field(default_factory=BinomialSettings)
+    barrier: BarrierSettings = Field(default_factory=BarrierSettings)
 
     @model_validator(mode="after")
     def validate_work(self) -> "SolveRequest":
         if len(set(self.methods)) != len(self.methods):
             raise ValueError("methods must not contain duplicates")
         allowed = (
-            {"closed_form", "finite_difference", "monte_carlo"}
-            if self.option_family == "european"
-            else {"binomial", "finite_difference", "monte_carlo"}
+            {"binomial", "finite_difference", "monte_carlo"}
+            if self.option_family == "american"
+            else {"closed_form", "finite_difference", "monte_carlo"}
         )
         if not set(self.methods).issubset(allowed):
             raise ValueError(f"methods are not compatible with {self.option_family} options")
@@ -83,6 +92,9 @@ class SolveRequest(BaseModel):
         if self.option_family == "american" and "monte_carlo" in self.methods:
             if self.monte_carlo.paths * self.monte_carlo.steps > 20_000_000:
                 raise ValueError("American Monte Carlo path grid exceeds the 20,000,000 node memory budget")
+        if self.option_family == "barrier" and self.barrier.direction == "down":
+            if "finite_difference" in self.methods and self.finite_difference.domain_max <= self.barrier.level:
+                raise ValueError("finite_difference.domain_max must exceed a down barrier")
         return self
 
     def estimated_operations(self) -> int:

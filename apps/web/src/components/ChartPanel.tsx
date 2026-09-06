@@ -54,6 +54,8 @@ export function ChartPanel({
   const activeResult = resultFor(response, activeMethod);
   const monteCarlo = response?.results.find((result) => result.method === "monte_carlo") ?? null;
   const reference = response?.results.find((result) => result.method === "closed_form" || result.method === "binomial") ?? null;
+  const barrierLevel = typeof activeResult?.diagnostics.barrier_level === "number" ? activeResult.diagnostics.barrier_level : null;
+  const barrierTriggered = activeResult?.diagnostics.barrier_triggered === true;
   const visibleTab = !monteCarlo && (tab === "convergence" || tab === "paths") ? "surface" : tab;
   const selectedIndex = activeResult
     ? Math.min(sliceIndex ?? activeResult.surface.times_to_maturity.length - 1, activeResult.surface.times_to_maturity.length - 1)
@@ -115,8 +117,26 @@ export function ChartPanel({
         hovertemplate: "Boundary spot %{x:.2f}<br>τ %{y:.3f}<extra></extra>",
       } as Data);
     }
+    if (barrierLevel != null) {
+      let maximumPrice = 0;
+      for (const row of prices) for (const price of row) maximumPrice = Math.max(maximumPrice, price);
+      const firstTime = times[0];
+      const lastTime = times[times.length - 1];
+      traces.push({
+        type: "mesh3d",
+        x: [barrierLevel, barrierLevel, barrierLevel, barrierLevel],
+        y: [firstTime, lastTime, lastTime, firstTime],
+        z: [0, 0, maximumPrice, maximumPrice],
+        i: [0, 0], j: [1, 2], k: [2, 3],
+        name: `Barrier H=${barrierLevel}`,
+        color: "#ff7c67",
+        opacity: 0.24,
+        hovertemplate: `Barrier H=${barrierLevel}<extra></extra>`,
+        showlegend: true,
+      } as Data);
+    }
     return traces;
-  }, [activeResult, response, selectedIndex]);
+  }, [activeResult, barrierLevel, response, selectedIndex]);
 
   const sliceData = useMemo<Data[]>(() => {
     if (!response) return [];
@@ -167,8 +187,23 @@ export function ChartPanel({
         } as Data);
       }
     }
+    if (barrierLevel != null) {
+      let maximumPrice = 0;
+      for (const result of response.results) {
+        for (const price of result.surface.prices[selectedIndex]) maximumPrice = Math.max(maximumPrice, price);
+      }
+      traces.push({
+        type: "scatter",
+        mode: "lines",
+        x: [barrierLevel, barrierLevel],
+        y: [0, maximumPrice],
+        name: `Barrier H=${barrierLevel}`,
+        line: { color: "#ff7c67", width: 2, dash: "dash" },
+        hovertemplate: `Barrier H=${barrierLevel}<extra></extra>`,
+      } as Data);
+    }
     return traces;
-  }, [activeResult?.method, reference, response, selectedIndex]);
+  }, [activeResult?.method, barrierLevel, reference, response, selectedIndex]);
 
   const convergenceData = useMemo<Data[]>(() => {
     if (!monteCarlo) return [];
@@ -219,7 +254,7 @@ export function ChartPanel({
 
   const pathsData = useMemo<Data[]>(() => {
     if (!monteCarlo) return [];
-    return monteCarlo.sample_paths.map((path, index) => ({
+    const traces = monteCarlo.sample_paths.map((path, index) => ({
       type: "scatter",
       mode: "lines",
       x: path.times,
@@ -229,6 +264,20 @@ export function ChartPanel({
       hovertemplate: "Time %{x:.3f}<br>Spot %{y:.2f}<extra></extra>",
       showlegend: false,
     } as Data));
+    const pathBarrier = typeof monteCarlo.diagnostics.barrier_level === "number" ? monteCarlo.diagnostics.barrier_level : null;
+    if (pathBarrier != null) {
+      traces.push({
+        type: "scatter",
+        mode: "lines",
+        x: [0, monteCarlo.surface.times_to_maturity.at(-1) ?? 0],
+        y: [pathBarrier, pathBarrier],
+        name: `Barrier H=${pathBarrier}`,
+        line: { color: "#ff7c67", width: 3, dash: "dash" },
+        hovertemplate: `Barrier H=${pathBarrier}<extra></extra>`,
+        showlegend: true,
+      } as Data);
+    }
+    return traces;
   }, [monteCarlo]);
 
   const commonLayout: Partial<Layout> = {
@@ -282,7 +331,10 @@ export function ChartPanel({
   return (
     <div className="chart-content">
       <div className="chart-heading-row">
-        <h2>Price surface</h2>
+        <div className="chart-title-group">
+          <h2>Price surface</h2>
+          {barrierLevel != null ? <span className={`barrier-state ${barrierTriggered ? "triggered" : ""}`}>H={barrierLevel} · {barrierTriggered ? "triggered" : "not triggered"}</span> : null}
+        </div>
         {response ? (
           <label className="active-method-select">
             <span>Active method</span>

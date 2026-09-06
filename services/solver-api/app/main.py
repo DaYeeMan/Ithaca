@@ -14,6 +14,11 @@ from app.solvers.american import (
 )
 from app.solvers.finite_difference import solve_finite_difference
 from app.solvers.monte_carlo import solve_monte_carlo
+from app.solvers.barrier import (
+    solve_barrier_analytical,
+    solve_barrier_finite_difference,
+    solve_barrier_monte_carlo,
+)
 
 
 def allowed_origins() -> list[str]:
@@ -24,7 +29,7 @@ def allowed_origins() -> list[str]:
     return [origin.strip() for origin in configured.split(",") if origin.strip()]
 
 
-app = FastAPI(title="Ithaca Solver API", version="0.3.0")
+app = FastAPI(title="Ithaca Solver API", version="0.4.0")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins(),
@@ -45,7 +50,7 @@ def capabilities() -> dict[str, object]:
         "option_families": [
             {"id": "european", "status": "available", "methods": ["closed_form", "finite_difference", "monte_carlo"]},
             {"id": "american", "status": "available", "methods": ["binomial", "finite_difference", "monte_carlo"]},
-            {"id": "barrier", "status": "planned", "methods": []},
+            {"id": "barrier", "status": "available", "methods": ["closed_form", "finite_difference", "monte_carlo"]},
             {"id": "asian", "status": "planned", "methods": []},
         ],
         "methods": [
@@ -104,6 +109,18 @@ def solve(request: SolveRequest) -> SolveResponse:
             surface_time_steps=2,
             steps=request.binomial.steps,
         )["price"])
+    elif request.option_family == "barrier":
+        reference_price = float(solve_barrier_analytical(
+            inputs=market,
+            side=request.option_side,
+            direction=request.barrier.direction,
+            style=request.barrier.style,
+            barrier=request.barrier.level,
+            surface_spot_min=request.surface.spot_min,
+            surface_spot_max=request.surface.spot_max,
+            surface_spot_steps=2,
+            surface_time_steps=2,
+        )["price"])
     results: list[MethodResult] = []
 
     for method in request.methods:
@@ -119,51 +136,79 @@ def solve(request: SolveRequest) -> SolveResponse:
             )
             raw_result["reference_error"] = 0.0
         elif method == "closed_form":
-            raw_result = {
-                **closed_form,
-                "method": "closed_form",
-                "reference_error": 0.0,
-                "diagnostics": {"solution": "analytical Black-Scholes"},
-            }
+            if request.option_family == "barrier":
+                raw_result = solve_barrier_analytical(
+                    inputs=market,
+                    side=request.option_side,
+                    direction=request.barrier.direction,
+                    style=request.barrier.style,
+                    barrier=request.barrier.level,
+                    surface_spot_min=request.surface.spot_min,
+                    surface_spot_max=request.surface.spot_max,
+                    surface_spot_steps=request.surface.spot_steps,
+                    surface_time_steps=request.surface.time_steps,
+                )
+                raw_result["reference_error"] = 0.0
+            else:
+                raw_result = {
+                    **closed_form,
+                    "method": "closed_form",
+                    "reference_error": 0.0,
+                    "diagnostics": {"solution": "analytical Black-Scholes"},
+                }
         elif method == "finite_difference":
             settings = request.finite_difference
-            finite_difference_solver = (
-                solve_american_finite_difference
-                if request.option_family == "american"
-                else solve_finite_difference
-            )
-            raw_result = finite_difference_solver(
-                inputs=market,
-                side=request.option_side,
-                surface_spot_min=request.surface.spot_min,
-                surface_spot_max=request.surface.spot_max,
-                surface_spot_steps=request.surface.spot_steps,
-                surface_time_steps=request.surface.time_steps,
-                grid_spot_steps=settings.spot_steps,
-                grid_time_steps=settings.time_steps,
-                domain_max=settings.domain_max,
-            )
+            if request.option_family == "barrier":
+                raw_result = solve_barrier_finite_difference(
+                    inputs=market, side=request.option_side,
+                    direction=request.barrier.direction, style=request.barrier.style,
+                    barrier=request.barrier.level,
+                    surface_spot_min=request.surface.spot_min, surface_spot_max=request.surface.spot_max,
+                    surface_spot_steps=request.surface.spot_steps, surface_time_steps=request.surface.time_steps,
+                    grid_spot_steps=settings.spot_steps, grid_time_steps=settings.time_steps,
+                    domain_max=settings.domain_max,
+                )
+            else:
+                finite_difference_solver = solve_american_finite_difference if request.option_family == "american" else solve_finite_difference
+                raw_result = finite_difference_solver(
+                    inputs=market,
+                    side=request.option_side,
+                    surface_spot_min=request.surface.spot_min,
+                    surface_spot_max=request.surface.spot_max,
+                    surface_spot_steps=request.surface.spot_steps,
+                    surface_time_steps=request.surface.time_steps,
+                    grid_spot_steps=settings.spot_steps,
+                    grid_time_steps=settings.time_steps,
+                    domain_max=settings.domain_max,
+                )
             raw_result["reference_error"] = abs(float(raw_result["price"]) - reference_price)
         else:
             settings = request.monte_carlo
-            monte_carlo_solver = (
-                solve_american_monte_carlo
-                if request.option_family == "american"
-                else solve_monte_carlo
-            )
-            raw_result = monte_carlo_solver(
-                inputs=market,
-                side=request.option_side,
-                surface_spot_min=request.surface.spot_min,
-                surface_spot_max=request.surface.spot_max,
-                surface_spot_steps=request.surface.spot_steps,
-                surface_time_steps=request.surface.time_steps,
-                paths=settings.paths,
-                steps=settings.steps,
-                seed=settings.seed,
-                antithetic=settings.antithetic,
-                confidence_level=settings.confidence_level,
-            )
+            if request.option_family == "barrier":
+                raw_result = solve_barrier_monte_carlo(
+                    inputs=market, side=request.option_side,
+                    direction=request.barrier.direction, style=request.barrier.style,
+                    barrier=request.barrier.level,
+                    surface_spot_min=request.surface.spot_min, surface_spot_max=request.surface.spot_max,
+                    surface_spot_steps=request.surface.spot_steps, surface_time_steps=request.surface.time_steps,
+                    paths=settings.paths, steps=settings.steps, seed=settings.seed,
+                    antithetic=settings.antithetic, confidence_level=settings.confidence_level,
+                )
+            else:
+                monte_carlo_solver = solve_american_monte_carlo if request.option_family == "american" else solve_monte_carlo
+                raw_result = monte_carlo_solver(
+                    inputs=market,
+                    side=request.option_side,
+                    surface_spot_min=request.surface.spot_min,
+                    surface_spot_max=request.surface.spot_max,
+                    surface_spot_steps=request.surface.spot_steps,
+                    surface_time_steps=request.surface.time_steps,
+                    paths=settings.paths,
+                    steps=settings.steps,
+                    seed=settings.seed,
+                    antithetic=settings.antithetic,
+                    confidence_level=settings.confidence_level,
+                )
             raw_result["reference_error"] = abs(float(raw_result["price"]) - reference_price)
         results.append(MethodResult(**raw_result))
 

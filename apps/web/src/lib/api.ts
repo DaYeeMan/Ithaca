@@ -47,6 +47,13 @@ export async function solveOption(
         confidence_level: parameters.confidenceLevel,
       },
       binomial: { steps: parameters.binomialSteps },
+      barrier: {
+        direction: parameters.barrierDirection,
+        style: parameters.barrierStyle,
+        level: parameters.barrierLevel,
+        monitoring: "continuous",
+        rebate: 0,
+      },
     }),
   });
 

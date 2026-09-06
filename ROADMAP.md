@@ -11,6 +11,7 @@ This file tracks unfinished product work. `PROJECT_PLAN.md` remains the source o
 - [x] Phase 1 mobile browser QA at 390 × 844 and 768 × 1024
 - [x] Phase 2: Crank–Nicolson and seeded Monte Carlo comparison, diagnostics, compute limits, cancellation, and browser QA
 - [x] Phase 3: American options, benchmark gates, solver comparison, early-exercise boundary, and browser QA
+- [x] Phase 4: continuous zero-rebate barrier options, analytical/finite-difference/bridge-Monte-Carlo comparison, benchmark gates, and browser QA
 
 ## Phase 2 — numerical comparison
 
@@ -46,11 +47,13 @@ Phase 3 exit: American methods agree within locked tolerances, no-dividend calls
 
 ### Phase 4 — barrier
 
-- [ ] Lock down-and-out and up-and-out analytical benchmarks
-- [ ] Add up/down and in/out controls for continuous monitoring and no rebate
-- [ ] Implement analytical, barrier-aware finite-difference, and Brownian-bridge Monte Carlo methods
-- [ ] Render barrier level and activation state
-- [ ] Pass parity, breached-barrier, boundary, and monotonicity gates
+- [x] Lock down-and-out and up-and-out analytical benchmarks
+- [x] Add up/down and in/out controls for continuous monitoring and no rebate
+- [x] Implement analytical, barrier-aware finite-difference, and Brownian-bridge Monte Carlo methods
+- [x] Render barrier level and activation state
+- [x] Pass parity, breached-barrier, boundary, and monotonicity gates
+
+Phase 4 exit: supported barrier contracts match locked analytical values, preserve knock-in/out parity, enforce absorbing boundaries, correct discrete-monitoring bias, and pass desktop/mobile browser QA. Passed.
 
 ### Phase 5 — Asian
 

@@ -33,7 +33,7 @@ export function ProblemPanel({ parameters, availableMethods, onChange, onFamilyC
           <select value={parameters.optionFamily} aria-label="Option family" onChange={(event) => onFamilyChange(event.currentTarget.value as OptionFamily)}>
             <option value="european">European</option>
             <option value="american">American</option>
-            <option value="barrier" disabled>Barrier — planned</option>
+            <option value="barrier">Barrier</option>
             <option value="asian" disabled>Asian — planned</option>
           </select>
         </label>
@@ -48,6 +48,35 @@ export function ProblemPanel({ parameters, availableMethods, onChange, onFamilyC
           </select>
         </label>
       </section>
+
+      {parameters.optionFamily === "barrier" ? (
+        <section className="control-section">
+          <h3>Barrier <ChevronDown size={15} /></h3>
+          <label className="select-field">
+            <span>Direction</span>
+            <select aria-label="Barrier direction" value={parameters.barrierDirection} onChange={(event) => onChange("barrierDirection", event.currentTarget.value as "down" | "up")}>
+              <option value="down">Down</option>
+              <option value="up">Up</option>
+            </select>
+          </label>
+          <label className="select-field">
+            <span>Activation</span>
+            <select aria-label="Barrier activation" value={parameters.barrierStyle} onChange={(event) => onChange("barrierStyle", event.currentTarget.value as "in" | "out")}>
+              <option value="out">Knock out</option>
+              <option value="in">Knock in</option>
+            </select>
+          </label>
+          <NumberField label="Level" symbol="H" value={parameters.barrierLevel} min={0.01} max={1_000_000} step={1} onChange={(value) => onChange("barrierLevel", value)} />
+          <label className="select-field">
+            <span>Monitoring</span>
+            <select aria-label="Barrier monitoring" value="continuous" disabled><option value="continuous">Continuous</option></select>
+          </label>
+          <label className="select-field">
+            <span>Rebate</span>
+            <select aria-label="Barrier rebate" value="none" disabled><option value="none">None</option></select>
+          </label>
+        </section>
+      ) : null}
 
       <section className="control-section">
         <h3>Market <ChevronDown size={15} /></h3>

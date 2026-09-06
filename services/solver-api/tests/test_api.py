@@ -107,6 +107,26 @@ class ApiTests(unittest.TestCase):
         self.assertIsNotNone(results[1]["exercise_boundary"])
         self.assertLessEqual(results[1]["reference_error"], 0.01)
 
+    def test_capabilities_publish_barrier_method_rules(self) -> None:
+        body = self.client.get("/v1/capabilities").json()
+        barrier = next(family for family in body["option_families"] if family["id"] == "barrier")
+        self.assertEqual(barrier["status"], "available")
+        self.assertEqual(barrier["methods"], ["closed_form", "finite_difference", "monte_carlo"])
+
+    def test_barrier_solve_returns_phase_four_methods_and_state(self) -> None:
+        request = {
+            **BASE_REQUEST,
+            "option_family": "barrier",
+            "barrier": {"direction": "down", "style": "out", "level": 90, "monitoring": "continuous", "rebate": 0},
+        }
+        response = self.client.post("/v1/solve", json=request)
+        self.assertEqual(response.status_code, 200, response.text)
+        results = response.json()["results"]
+        self.assertEqual([result["method"] for result in results], request["methods"])
+        self.assertAlmostEqual(results[0]["price"], 8.665471658245675, delta=1e-10)
+        self.assertFalse(results[0]["diagnostics"]["barrier_triggered"])
+        self.assertLessEqual(results[1]["reference_error"], 0.01)
+
 
 if __name__ == "__main__":
     unittest.main()

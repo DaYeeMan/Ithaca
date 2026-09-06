@@ -1,5 +1,5 @@
 export type OptionSide = "call" | "put";
-export type OptionFamily = "european" | "american";
+export type OptionFamily = "european" | "american" | "barrier";
 export type SolverMethod = "closed_form" | "binomial" | "finite_difference" | "monte_carlo";
 
 export interface SolverParameters {
@@ -25,6 +25,9 @@ export interface SolverParameters {
   monteCarloAntithetic: boolean;
   confidenceLevel: number;
   binomialSteps: number;
+  barrierDirection: "down" | "up";
+  barrierStyle: "in" | "out";
+  barrierLevel: number;
 }
 
 export interface SurfaceResult {

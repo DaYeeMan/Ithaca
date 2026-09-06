@@ -25,6 +25,9 @@ const valid: SolverParameters = {
   monteCarloAntithetic: true,
   confidenceLevel: 0.95,
   binomialSteps: 800,
+  barrierDirection: "down",
+  barrierStyle: "out",
+  barrierLevel: 90,
 };
 
 describe("validateParameters", () => {
@@ -63,5 +66,13 @@ describe("validateParameters", () => {
       optionFamily: "american",
       methods: ["binomial", "finite_difference", "monte_carlo"],
     })).toBeNull();
+  });
+
+  it("accepts Barrier Phase 4 methods", () => {
+    expect(validateParameters({ ...valid, optionFamily: "barrier" })).toBeNull();
+  });
+
+  it("rejects a non-positive barrier", () => {
+    expect(validateParameters({ ...valid, optionFamily: "barrier", barrierLevel: 0 })).toMatch(/barrier level/i);
   });
 });

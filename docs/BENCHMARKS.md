@@ -1,6 +1,6 @@
 # Numerical Benchmark Specification
 
-Status: European Phase 2 gates are locked and passing. The Phase 3 American baseline is locked. Later-family expected values must be locked from independent reference implementations before each solver is implemented.
+Status: European Phase 2, American Phase 3, and barrier Phase 4 gates are locked and passing. The Asian expected values remain to be locked before Phase 5 implementation.
 
 ## Conventions
 
@@ -111,11 +111,25 @@ Use the European baseline call with `q=0`. An American call with no dividends mu
 
 `S=100`, `K=100`, `H=90`, `T=1`, `sigma=0.20`, `r=0.05`, `q=0`, continuous monitoring, no rebate.
 
+Locked analytical value: `8.665471658245675`.
+
 ### `BAR-UP-OUT-CALL`
 
 `S=100`, `K=100`, `H=120`, `T=1`, `sigma=0.20`, `r=0.05`, `q=0`, continuous monitoring, no rebate.
 
-Lock analytical prices from a separately reviewed Reiner–Rubinstein implementation before Phase 4. Cross-check against QuantLib or published tables.
+Locked analytical value: `1.1760653996503727`.
+
+Independent references:
+
+1. QuantLib 1.40 `AnalyticBarrierEngine`, evaluated with flat continuously compounded curves, `Actual365Fixed`, and a one-year European exercise. The engine documents Haug's barrier formulas and tests against published literature: <https://github.com/lballabio/QuantLib/blob/master/ql/pricingengines/barrier/analyticbarrierengine.hpp>.
+2. Test-only numerical quadrature of the drifted-log-Brownian transition density killed at the absorbing barrier. This reflection-principle implementation is independent of the production Reiner–Rubinstein decomposition and reproduces both locked values within `1e-10`.
+
+Phase 4 production conventions:
+
+- Analytical pricing uses the Reiner–Rubinstein `A`–`D` decomposition for knock-outs and analytical vanilla parity for knock-ins.
+- Finite differences use Crank–Nicolson on a domain whose barrier is an exact absorbing endpoint. Knock-ins are recovered from numerical vanilla minus knock-out values.
+- Monte Carlo simulates exact GBM endpoints and weights each interval by its conditional Brownian-bridge survival probability. Scalar estimates use the full path budget; surfaces use common antithetic random numbers, at most 512 paths per spot, and at most 24 time steps.
+- A barrier touched at request time immediately deactivates a knock-out or activates a knock-in. Continuous monitoring and zero rebate are fixed Phase 4 conventions.
 
 Acceptance:
 
@@ -124,6 +138,13 @@ Acceptance:
 - Finite-difference solution satisfies the absorbing barrier boundary.
 - Brownian-bridge Monte Carlo reduces discrete-monitoring bias relative to naive path sampling.
 - Moving a knock-out barrier farther from spot cannot reduce contract value under otherwise fixed inputs.
+
+Locked Phase 4 results:
+
+- Default down-and-out call finite difference: within `0.01` of `8.665471658245675`.
+- Default up-and-out call finite difference: within `0.01` of `1.1760653996503727`.
+- Seeded bridge Monte Carlo 95% intervals cover the corresponding analytical references.
+- The same-seed bridge estimator has lower absolute bias than naive 12-date endpoint monitoring for `BAR-DOWN-OUT-CALL`.
 
 ## Asian benchmarks
 

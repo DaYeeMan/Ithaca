@@ -8,7 +8,14 @@ const methodDescription: Record<SolverMethod, string> = {
   monte_carlo: "Monte Carlo samples risk-neutral geometric Brownian paths. Reported confidence intervals describe statistical uncertainty, not deterministic precision.",
 };
 
-export function EquationPanel({ family, side, method }: { family: OptionFamily; side: OptionSide; method: SolverMethod }) {
+export function EquationPanel({ family, side, method, barrierDirection, barrierStyle, barrierLevel }: {
+  family: OptionFamily;
+  side: OptionSide;
+  method: SolverMethod;
+  barrierDirection: "down" | "up";
+  barrierStyle: "in" | "out";
+  barrierLevel: number;
+}) {
   const payoff = side === "call" ? "\\max(S-K,0)" : "\\max(K-S,0)";
   return (
     <div className="equation-content">
@@ -25,7 +32,12 @@ export function EquationPanel({ family, side, method }: { family: OptionFamily; 
       </section>
       <section>
         <h3>Boundary conditions</h3>
-        {family === "american" && side === "put" ? (
+        {family === "barrier" ? (
+          <>
+            <BlockMath math={barrierStyle === "out" ? "V(H,t)=0" : "V_{in}=V_{vanilla}-V_{out}"} />
+            <p className="equation-note">{barrierDirection === "down" ? "Down" : "Up"}-and-{barrierStyle} at H = {barrierLevel}. Continuous monitoring; no rebate.</p>
+          </>
+        ) : family === "american" && side === "put" ? (
           <>
             <BlockMath math={"V(0,t)=K"} />
             <BlockMath math={"V(S_{\\max},t)\\approx0"} />
@@ -44,7 +56,7 @@ export function EquationPanel({ family, side, method }: { family: OptionFamily; 
       </section>
       <section>
         <h3>About the selected method</h3>
-        <p>{methodDescription[method]}</p>
+        <p>{family === "barrier" && method === "closed_form" ? "Reiner–Rubinstein evaluates the continuously monitored, zero-rebate single-barrier contract analytically." : methodDescription[method]}</p>
         <p className="equation-note">
           Time axis uses <InlineMath math={"\\tau=T-t"} />. At <InlineMath math={"\\tau=0"} />, the surface equals the payoff.
         </p>

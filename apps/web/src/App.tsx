@@ -20,6 +20,7 @@ const ChartPanel = lazy(() => import("./components/ChartPanel").then((module) =>
 const FAMILY_METHODS: Record<OptionFamily, SolverMethod[]> = {
   european: ["closed_form", "finite_difference", "monte_carlo"],
   american: ["binomial", "finite_difference", "monte_carlo"],
+  barrier: ["closed_form", "finite_difference", "monte_carlo"],
 };
 
 const DEFAULT_PARAMETERS: SolverParameters = {
@@ -45,6 +46,9 @@ const DEFAULT_PARAMETERS: SolverParameters = {
   monteCarloAntithetic: true,
   confidenceLevel: 0.95,
   binomialSteps: 800,
+  barrierDirection: "down",
+  barrierStyle: "out",
+  barrierLevel: 90,
 };
 
 type Status = "idle" | "solving" | "error";
@@ -155,9 +159,8 @@ export default function App() {
   }, [activeMethod, parameters]);
 
   const reset = useCallback(() => {
-    setParameters(DEFAULT_PARAMETERS);
-    setActiveMethod("closed_form");
-    setMessage(null);
+    activeRequest.current?.abort();
+    window.location.reload();
   }, []);
 
   const availableMethods = capabilities?.option_families.find((family) => family.id === parameters.optionFamily)?.methods
@@ -193,13 +196,13 @@ export default function App() {
       </section>
 
       <aside className="equation-panel desktop-rail">
-        <EquationPanel family={parameters.optionFamily} side={parameters.optionSide} method={activeMethod} />
+        <EquationPanel family={parameters.optionFamily} side={parameters.optionSide} method={activeMethod} barrierDirection={parameters.barrierDirection} barrierStyle={parameters.barrierStyle} barrierLevel={parameters.barrierLevel} />
       </aside>
 
       <ResultsStrip response={response} activeMethod={activeMethod} status={status} />
 
       <footer className="status-footer">
-        <span>Model: Black–Scholes</span><span>Currency: USD</span><span>Phase 3 · American options</span>
+        <span>Model: Black–Scholes</span><span>Currency: USD</span><span>Phase 4 · Barrier options</span>
       </footer>
 
       <nav className="mobile-nav" aria-label="Workbench panels">
@@ -213,7 +216,7 @@ export default function App() {
           <div className="sheet-handle" />
           <button className="sheet-close" aria-label="Close panel" onClick={() => setMobilePanel(null)}><X /></button>
           {mobilePanel === "problem" ? <ProblemPanel parameters={parameters} availableMethods={availableMethods} onChange={changeParameter} onFamilyChange={changeFamily} onToggleMethod={toggleMethod} /> : null}
-          {mobilePanel === "equation" ? <EquationPanel family={parameters.optionFamily} side={parameters.optionSide} method={activeMethod} /> : null}
+          {mobilePanel === "equation" ? <EquationPanel family={parameters.optionFamily} side={parameters.optionSide} method={activeMethod} barrierDirection={parameters.barrierDirection} barrierStyle={parameters.barrierStyle} barrierLevel={parameters.barrierLevel} /> : null}
           {mobilePanel === "results" ? <ResultsStrip response={response} activeMethod={activeMethod} status={status} /> : null}
         </section>
       ) : null}

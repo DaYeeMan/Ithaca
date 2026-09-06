@@ -2,7 +2,7 @@
 
 Interactive option-pricing PDE solver and visualization workbench.
 
-Phase 3 prices European and American calls and puts. European methods are Black–Scholes closed form, Crank–Nicolson finite differences, and seeded risk-neutral Monte Carlo. American methods are a Cox–Ross–Rubinstein tree, Crank–Nicolson with a PSOR early-exercise constraint, and Longstaff–Schwartz Monte Carlo. The workbench renders synchronized surfaces and slices, uncertainty, convergence, sample paths, governing equations, numerical diagnostics, and the American early-exercise boundary. Asian and barrier contracts remain planned phases.
+Phase 4 prices European, American, and continuously monitored single-barrier calls and puts. Barrier contracts support up/down, knock-in/knock-out, and no rebate through Reiner–Rubinstein analytical pricing, absorbing-boundary Crank–Nicolson, and Brownian-bridge-corrected Monte Carlo. The workbench renders synchronized surfaces and slices, uncertainty, convergence, sample paths, governing equations, numerical diagnostics, early-exercise boundaries, barrier levels, and activation state. Asian contracts remain planned.
 
 ## Local development
 

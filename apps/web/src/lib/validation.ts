@@ -25,11 +25,14 @@ export function validateParameters(parameters: SolverParameters): string | null 
   if (values.some((value) => !Number.isFinite(value))) return "Every parameter must be a finite number.";
   if (parameters.methods.length === 0) return "Select at least one solution method.";
   if (new Set(parameters.methods).size !== parameters.methods.length) return "Each solution method may be selected once.";
-  const compatible = parameters.optionFamily === "european"
-    ? new Set(["closed_form", "finite_difference", "monte_carlo"])
-    : new Set(["binomial", "finite_difference", "monte_carlo"]);
+  const compatible = parameters.optionFamily === "american"
+    ? new Set(["binomial", "finite_difference", "monte_carlo"])
+    : new Set(["closed_form", "finite_difference", "monte_carlo"]);
   if (parameters.methods.some((method) => !compatible.has(method))) return "Selected method is not compatible with this option family.";
   if (parameters.spot <= 0 || parameters.strike <= 0) return "Spot and strike must be greater than zero.";
+  if (parameters.optionFamily === "barrier" && (parameters.barrierLevel <= 0 || parameters.barrierLevel > 1_000_000)) {
+    return "Barrier level must be greater than zero and at most 1,000,000.";
+  }
   if (parameters.maturity <= 0 || parameters.maturity > 50) return "Maturity must be between 0 and 50 years.";
   if (parameters.volatility <= 0 || parameters.volatility > 5) return "Volatility must be between 0% and 500%.";
   if (parameters.rate < -1 || parameters.rate > 1 || parameters.dividend < -1 || parameters.dividend > 1) {
@@ -50,6 +53,10 @@ export function validateParameters(parameters: SolverParameters): string | null 
     }
     if (parameters.finiteDifferenceDomainMax < Math.max(parameters.spot, parameters.spotMax)) {
       return "Finite-difference domain must cover spot and surface maximum.";
+    }
+    if (parameters.optionFamily === "barrier" && parameters.barrierDirection === "down"
+      && parameters.finiteDifferenceDomainMax <= parameters.barrierLevel) {
+      return "Finite-difference domain must exceed a down barrier.";
     }
   }
   if (parameters.methods.includes("monte_carlo")) {
