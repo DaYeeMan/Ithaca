@@ -2,7 +2,7 @@
 
 Interactive option-pricing PDE solver and visualization workbench.
 
-Phase 4 prices European, American, and continuously monitored single-barrier calls and puts. Barrier contracts support up/down, knock-in/knock-out, and no rebate through Reiner–Rubinstein analytical pricing, absorbing-boundary Crank–Nicolson, and Brownian-bridge-corrected Monte Carlo. The workbench renders synchronized surfaces and slices, uncertainty, convergence, sample paths, governing equations, numerical diagnostics, early-exercise boundaries, barrier levels, and activation state. Asian contracts remain planned.
+The release candidate prices European, American, barrier, and fixed-strike Asian calls and puts. It includes bounded compute, cooperative request cancellation, structured diagnostics, accessible desktop/mobile controls, synchronized charts, uncertainty, convergence, governing equations, and numerical diagnostics.
 
 ## Local development
 
@@ -41,3 +41,6 @@ npm run build:web
 - [ROADMAP.md](./ROADMAP.md): current status and implementation checklist
 - [docs/BENCHMARKS.md](./docs/BENCHMARKS.md): numerical reference cases and accuracy gates
 - [docs/DESIGN_SPEC_DRAFT.md](./docs/DESIGN_SPEC_DRAFT.md): approved visual system and responsive composition
+- [docs/ACCESSIBILITY.md](./docs/ACCESSIBILITY.md): keyboard and screen-reader audit
+- [docs/PERFORMANCE.md](./docs/PERFORMANCE.md): performance gates and resource controls
+- [docs/OPERATIONS.md](./docs/OPERATIONS.md): deployment, monitoring, smoke tests, and rollback

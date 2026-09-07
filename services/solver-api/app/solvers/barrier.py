@@ -6,6 +6,8 @@ from time import perf_counter
 from typing import Literal
 
 import numpy as np
+
+from app.execution import check_execution
 from scipy.linalg import solve_banded
 
 from app.solvers.black_scholes import MarketInputs, OptionSide, black_scholes_price, normal_cdf
@@ -106,6 +108,7 @@ def solve_barrier_analytical(
     target_times = np.linspace(0.0, inputs.maturity, surface_time_steps)
     prices = np.empty((surface_time_steps, surface_spot_steps), dtype=float)
     for time_index, tau in enumerate(target_times):
+        check_execution()
         for spot_index, spot in enumerate(target_spots):
             node = MarketInputs(max(float(spot), 1e-12), inputs.strike, inputs.maturity, inputs.volatility, inputs.rate, inputs.dividend)
             prices[time_index, spot_index] = barrier_price(node, side, direction, style, barrier, float(tau))
@@ -171,6 +174,7 @@ def _knock_out_finite_difference(
     banded[2, :-1] = -alpha[1:]
 
     for time_index in range(grid_time_steps):
+        check_execution()
         tau_now = times[time_index]
         tau_next = times[time_index + 1]
         vanilla_now = _boundaries(inputs, side, domain_max, tau_now)
@@ -287,6 +291,8 @@ def _barrier_discounted_payoffs(
     previous = np.broadcast_to(initial_distance, survival.shape)
     variance = inputs.volatility**2 * delta_t
     for step in range(steps):
+        if step % 8 == 0:
+            check_execution()
         current = initial_distance[None, :] + sign * cumulative[:, step, None]
         safe = (previous > 0.0) & (current > 0.0)
         crossing = np.zeros_like(survival)
@@ -341,6 +347,7 @@ def solve_barrier_monte_carlo(
     surface_prices = np.empty((surface_time_steps, surface_spot_steps), dtype=float)
     surface_errors = np.empty_like(surface_prices)
     for time_index, tau in enumerate(target_times):
+        check_execution()
         if tau <= 0.0:
             payoff = np.maximum(target_spots - inputs.strike, 0.0) if side == "call" else np.maximum(inputs.strike - target_spots, 0.0)
             triggered = target_spots <= barrier if direction == "down" else target_spots >= barrier

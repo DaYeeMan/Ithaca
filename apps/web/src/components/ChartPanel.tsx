@@ -1,13 +1,7 @@
-import { useMemo, useState } from "react";
-import createPlotlyComponent from "react-plotly.js/factory";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Plotly from "plotly.js-dist-min";
 import type { Data, Layout } from "plotly.js";
-import type { MethodResult, SolveResponse, SolverMethod } from "../types";
-
-const plotFactory = (
-  createPlotlyComponent as unknown as { default?: typeof createPlotlyComponent }
-).default ?? createPlotlyComponent;
-const Plot = plotFactory(Plotly);
+import type { MethodResult, OptionFamily, SolveResponse, SolverMethod } from "../types";
 
 type ChartTab = "surface" | "slice" | "convergence" | "paths";
 
@@ -17,6 +11,20 @@ const plotConfig = {
   scrollZoom: true,
   modeBarButtonsToRemove: ["toImage", "sendDataToCloud", "lasso2d", "select2d"] as never[],
 };
+
+function ScientificPlot({ data, layout, label }: { data: Data[]; layout: Partial<Layout>; label: string }) {
+  const container = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const node = container.current;
+    if (!node) return;
+    const plotLayout = JSON.parse(JSON.stringify(layout)) as Partial<Layout>;
+    void Plotly.react(node, data, plotLayout, plotConfig);
+    return () => Plotly.purge(node);
+  }, [data, layout]);
+
+  return <div ref={container} role="img" aria-label={label} style={{ width: "100%", height: "100%" }} />;
+}
 
 const methodLabels: Record<SolverMethod, string> = {
   closed_form: "Closed form",
@@ -32,6 +40,19 @@ const methodColors: Record<SolverMethod, string> = {
   monte_carlo: "#ffb000",
 };
 
+function resultLabel(result: MethodResult): string {
+  if (result.diagnostics.scheme === "augmented-state CRR lattice") return "Augmented state";
+  if (result.diagnostics.solution === "discrete geometric-average analytical") return "Geometric analytical";
+  return methodLabels[result.method];
+}
+
+function legendLabel(result: MethodResult): string {
+  if (result.diagnostics.scheme === "augmented-state CRR lattice") return "Augmented";
+  if (result.diagnostics.solution === "discrete geometric-average analytical") return "Geometric";
+  if (result.method === "finite_difference") return "Finite diff.";
+  return methodLabels[result.method];
+}
+
 const baseFont = { family: "Inter, ui-sans-serif, system-ui, sans-serif", color: "#dfe8ef", size: 12 };
 
 function resultFor(response: SolveResponse | null, method: SolverMethod): MethodResult | null {
@@ -43,11 +64,17 @@ export function ChartPanel({
   activeMethod,
   onActiveMethodChange,
   loading,
+  family,
+  averageState,
+  onAverageStateChange,
 }: {
   response: SolveResponse | null;
   activeMethod: SolverMethod;
   onActiveMethodChange: (method: SolverMethod) => void;
   loading: boolean;
+  family: OptionFamily;
+  averageState: number;
+  onAverageStateChange: (value: number) => void;
 }) {
   const [tab, setTab] = useState<ChartTab>("surface");
   const [sliceIndex, setSliceIndex] = useState<number | null>(null);
@@ -60,6 +87,23 @@ export function ChartPanel({
   const selectedIndex = activeResult
     ? Math.min(sliceIndex ?? activeResult.surface.times_to_maturity.length - 1, activeResult.surface.times_to_maturity.length - 1)
     : 0;
+  const tabs: Array<{ id: ChartTab; label: string; disabled: boolean }> = [
+    { id: "surface", label: "Surface", disabled: false },
+    { id: "slice", label: "Price slice", disabled: false },
+    { id: "convergence", label: "Convergence", disabled: !monteCarlo },
+    { id: "paths", label: "Paths", disabled: !monteCarlo },
+  ];
+  const chartLabel = activeResult
+    ? `${tabs.find((item) => item.id === visibleTab)?.label} chart for ${resultLabel(activeResult)}. Price ${activeResult.price.toFixed(4)}.`
+    : "Option price visualization has no result yet.";
+
+  const selectAdjacentTab = (current: ChartTab, direction: -1 | 1) => {
+    const enabled = tabs.filter((item) => !item.disabled);
+    const index = enabled.findIndex((item) => item.id === current);
+    const next = enabled[(index + direction + enabled.length) % enabled.length];
+    setTab(next.id);
+    document.getElementById(`chart-tab-${next.id}`)?.focus();
+  };
 
   const surfaceData = useMemo<Data[]>(() => {
     if (!activeResult) return [];
@@ -69,7 +113,7 @@ export function ChartPanel({
       x: spots,
       y: times,
       z: prices,
-      name: methodLabels[activeResult.method],
+      name: resultLabel(activeResult),
       colorscale: [
         [0, "#171a57"],
         [0.28, "#075b93"],
@@ -79,7 +123,7 @@ export function ChartPanel({
       ],
       colorbar: { title: { text: "Price", font: baseFont }, orientation: "h", x: 0.5, y: -0.08, len: 0.58, thickness: 10, tickfont: baseFont },
       contours: { x: { show: true, color: "rgba(255,255,255,.28)", width: 1 }, y: { show: true, color: "rgba(255,255,255,.28)", width: 1 } },
-      hovertemplate: `Spot %{x:.2f}<br>τ %{y:.3f} yr<br>Price %{z:.4f}<extra>${methodLabels[activeResult.method]}</extra>`,
+      hovertemplate: `Spot %{x:.2f}<br>τ %{y:.3f} yr<br>Price %{z:.4f}<extra>${resultLabel(activeResult)}</extra>`,
       showscale: true,
     } as Data];
 
@@ -90,9 +134,9 @@ export function ChartPanel({
         x: result.surface.spots,
         y: result.surface.spots.map(() => result.surface.times_to_maturity[selectedIndex]),
         z: result.surface.prices[selectedIndex],
-        name: methodLabels[result.method],
+        name: legendLabel(result),
         line: { color: methodColors[result.method], width: result.method === activeResult.method ? 6 : 3 },
-        hovertemplate: `Spot %{x:.2f}<br>Price %{z:.4f}<extra>${methodLabels[result.method]}</extra>`,
+        hovertemplate: `Spot %{x:.2f}<br>Price %{z:.4f}<extra>${resultLabel(result)}</extra>`,
         showlegend: true,
       } as Data);
     }
@@ -133,7 +177,7 @@ export function ChartPanel({
         opacity: 0.24,
         hovertemplate: `Barrier H=${barrierLevel}<extra></extra>`,
         showlegend: true,
-      } as Data);
+      } as unknown as Data);
     }
     return traces;
   }, [activeResult, barrierLevel, response, selectedIndex]);
@@ -169,9 +213,9 @@ export function ChartPanel({
         mode: "lines",
         x: result.surface.spots,
         y: result.surface.prices[selectedIndex],
-        name: methodLabels[result.method],
+        name: legendLabel(result),
         line: { color: methodColors[result.method], width: result.method === activeResult?.method ? 3 : 2 },
-        hovertemplate: `Spot %{x:.2f}<br>Price %{y:.4f}<extra>${methodLabels[result.method]}</extra>`,
+        hovertemplate: `Spot %{x:.2f}<br>Price %{y:.4f}<extra>${resultLabel(result)}</extra>`,
       } as Data);
       if (reference && result.method !== "closed_form") {
         traces.push({
@@ -181,7 +225,7 @@ export function ChartPanel({
           y: result.surface.prices[selectedIndex].map((price, index) => price - reference.surface.prices[selectedIndex][index]),
           xaxis: "x2",
           yaxis: "y2",
-          name: `${methodLabels[result.method]} error`,
+          name: `${resultLabel(result)} error`,
           line: { color: methodColors[result.method], width: 2, dash: "dot" },
           hovertemplate: "Spot %{x:.2f}<br>Error %{y:.5f}<extra></extra>",
         } as Data);
@@ -339,21 +383,36 @@ export function ChartPanel({
           <label className="active-method-select">
             <span>Active method</span>
             <select aria-label="Active method" value={activeResult?.method ?? activeMethod} onChange={(event) => onActiveMethodChange(event.currentTarget.value as SolverMethod)}>
-              {response.results.map((result) => <option key={result.method} value={result.method}>{methodLabels[result.method]}</option>)}
+              {response.results.map((result) => <option key={result.method} value={result.method}>{resultLabel(result)}</option>)}
             </select>
           </label>
         ) : null}
       </div>
       <div className="chart-tabs" role="tablist" aria-label="Visualization">
-        <button role="tab" aria-selected={visibleTab === "surface"} className={visibleTab === "surface" ? "active" : ""} onClick={() => setTab("surface")}>Surface</button>
-        <button role="tab" aria-selected={visibleTab === "slice"} className={visibleTab === "slice" ? "active" : ""} onClick={() => setTab("slice")}>Price slice</button>
-        <button role="tab" aria-selected={visibleTab === "convergence"} className={visibleTab === "convergence" ? "active" : ""} disabled={!monteCarlo} onClick={() => setTab("convergence")}>Convergence</button>
-        <button role="tab" aria-selected={visibleTab === "paths"} className={visibleTab === "paths" ? "active" : ""} disabled={!monteCarlo} onClick={() => setTab("paths")}>Paths</button>
+        {tabs.map((item) => <button
+          key={item.id}
+          id={`chart-tab-${item.id}`}
+          type="button"
+          role="tab"
+          aria-controls="chart-tabpanel"
+          aria-selected={visibleTab === item.id}
+          tabIndex={visibleTab === item.id ? 0 : -1}
+          className={visibleTab === item.id ? "active" : ""}
+          disabled={item.disabled}
+          onClick={() => setTab(item.id)}
+          onKeyDown={(event) => {
+            if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
+              event.preventDefault();
+              selectAdjacentTab(visibleTab, event.key === "ArrowLeft" ? -1 : 1);
+            }
+          }}
+        >{item.label}</button>)}
       </div>
 
-      <div className={`chart-stage ${loading ? "loading" : ""}`} aria-busy={loading}>
+      <div id="chart-tabpanel" role="tabpanel" aria-labelledby={`chart-tab-${visibleTab}`} className={`chart-stage ${loading ? "loading" : ""}`} aria-busy={loading}>
+        <p className="sr-only">{chartLabel}</p>
         {activeResult ? (
-          <Plot data={plotData} layout={plotLayout} config={plotConfig} useResizeHandler style={{ width: "100%", height: "100%" }} />
+          <ScientificPlot data={plotData} layout={plotLayout} label={chartLabel} />
         ) : (
           <div className="chart-empty">
             <span className="status-spinner" />
@@ -363,16 +422,24 @@ export function ChartPanel({
       </div>
 
       {activeResult && (visibleTab === "surface" || visibleTab === "slice") ? (
-        <label className="slice-control">
-          <span>Slice at τ = {activeResult.surface.times_to_maturity[selectedIndex].toFixed(2)} yr</span>
-          <input
-            type="range"
-            min={0}
-            max={activeResult.surface.times_to_maturity.length - 1}
-            value={selectedIndex}
-            onChange={(event) => setSliceIndex(event.currentTarget.valueAsNumber)}
-          />
-        </label>
+        <>
+          <label className="slice-control">
+            <span>Slice at τ = {activeResult.surface.times_to_maturity[selectedIndex].toFixed(2)} yr</span>
+            <input
+              type="range"
+              min={0}
+              max={activeResult.surface.times_to_maturity.length - 1}
+              value={selectedIndex}
+              onChange={(event) => setSliceIndex(event.currentTarget.valueAsNumber)}
+            />
+          </label>
+          {family === "asian" ? (
+            <label className="slice-control">
+              <span>Fixed average state A = {averageState.toFixed(2)}</span>
+              <input type="range" min={1} max={300} step={1} value={averageState} onChange={(event) => onAverageStateChange(event.currentTarget.valueAsNumber)} />
+            </label>
+          ) : null}
+        </>
       ) : null}
       {visibleTab === "paths" ? <p className="chart-note">Displayed paths are a small sample, not the full pricing population.</p> : null}
     </div>

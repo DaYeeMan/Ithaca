@@ -12,6 +12,7 @@ This file tracks unfinished product work. `PROJECT_PLAN.md` remains the source o
 - [x] Phase 2: Crank–Nicolson and seeded Monte Carlo comparison, diagnostics, compute limits, cancellation, and browser QA
 - [x] Phase 3: American options, benchmark gates, solver comparison, early-exercise boundary, and browser QA
 - [x] Phase 4: continuous zero-rebate barrier options, analytical/finite-difference/bridge-Monte-Carlo comparison, benchmark gates, and browser QA
+- [x] Phase 5: discrete fixed-strike Asian options, analytical/augmented-state/Monte-Carlo comparison, fixed-state slices, and benchmark gates
 
 ## Phase 2 — numerical comparison
 
@@ -57,22 +58,26 @@ Phase 4 exit: supported barrier contracts match locked analytical values, preser
 
 ### Phase 5 — Asian
 
-- [ ] Lock discrete geometric monthly analytical benchmark
-- [ ] Lock high-precision arithmetic monthly reference and metadata
-- [ ] Add fixed-strike arithmetic averaging with discrete monitoring controls
-- [ ] Implement geometric analytical, arithmetic/geometric Monte Carlo, and augmented-state methods
-- [ ] Render spot × time × price with fixed average-state slider
-- [ ] Pass observation-count, benchmark, convergence, and fixed-state slice gates
+- [x] Lock discrete geometric monthly analytical benchmark
+- [x] Lock high-precision arithmetic monthly reference and metadata
+- [x] Add fixed-strike arithmetic averaging with discrete monitoring controls
+- [x] Implement geometric analytical, arithmetic/geometric Monte Carlo, and augmented-state methods
+- [x] Render spot × time × price with fixed average-state slider
+- [x] Pass observation-count, benchmark, convergence, and fixed-state slice gates
+
+Phase 5 exit: geometric values match analytical benchmarks, arithmetic control-variate Monte Carlo matches locked RQMC references, augmented-state values meet documented discretization tolerance, and fixed-state slices reproduce scalar prices. Passed.
 
 ## Phase 6 — release hardening
 
-- [ ] Complete keyboard and screen-reader audit
-- [ ] Test responsive layouts across supported desktop and mobile widths
-- [ ] Add API timeouts, cancellation, structured logs, and production diagnostics
-- [ ] Run performance and security reviews
+- [x] Complete keyboard and screen-reader audit
+- [x] Test responsive layouts across supported desktop and mobile widths
+- [x] Add API timeouts, cancellation, structured logs, and production diagnostics
+- [x] Run performance and security reviews
 - [ ] Deploy frontend to Vercel
 - [ ] Deploy FastAPI service separately and configure CORS/API URL
-- [ ] Add production smoke tests and operational documentation
+- [x] Add production smoke tests and operational documentation
+
+Phase 6 local hardening is complete. Production deployment is blocked on Vercel authentication and selection of the FastAPI container host.
 
 ## Deferred beyond initial release
 

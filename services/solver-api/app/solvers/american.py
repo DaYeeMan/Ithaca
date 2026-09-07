@@ -6,6 +6,8 @@ from time import perf_counter
 
 import numpy as np
 
+from app.execution import check_execution
+
 from app.solvers.black_scholes import MarketInputs, OptionSide
 from app.solvers.finite_difference import _interpolate_surface
 
@@ -114,7 +116,7 @@ def solve_american_finite_difference(
     domain_max: float,
     omega: float = 1.2,
     tolerance: float = 1e-8,
-    max_iterations: int = 10_000,
+    max_iterations: int = 250,
 ) -> dict[str, object]:
     started_at = perf_counter()
     spots = np.linspace(0.0, domain_max, grid_spot_steps)
@@ -139,6 +141,7 @@ def solve_american_finite_difference(
     iteration_counts: list[int] = []
 
     for time_index in range(grid_time_steps):
+        check_execution()
         tau_next = times[time_index + 1]
         lower_next, upper_next = _american_boundaries(inputs, side, domain_max, tau_next)
         previous = values[time_index]
@@ -147,6 +150,8 @@ def solve_american_finite_difference(
         right_hand[-1] += gamma[-1] * upper_next
         current = np.maximum(previous[1:-1].copy(), intrinsic[1:-1])
         for iteration in range(1, max_iterations + 1):
+            if iteration % 16 == 0:
+                check_execution()
             max_change = 0.0
             for index in range(current.size):
                 left_value = lower_next if index == 0 else current[index - 1]
@@ -333,6 +338,7 @@ def solve_american_monte_carlo(
     surface_prices[0] = _payoff(target_spots, inputs.strike, side)
     surface_errors[0] = 0.0
     for time_index, tau in enumerate(target_times[1:], start=1):
+        check_execution()
         surface_inputs = MarketInputs(
             spot=inputs.spot,
             strike=inputs.strike,

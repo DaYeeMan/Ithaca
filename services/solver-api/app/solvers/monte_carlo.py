@@ -6,6 +6,8 @@ from time import perf_counter
 
 import numpy as np
 
+from app.execution import check_execution
+
 from app.solvers.black_scholes import MarketInputs, OptionSide
 
 
@@ -14,6 +16,7 @@ def _normal_samples(paths: int, steps: int, seed: int, antithetic: bool) -> np.n
     base_count = paths // 2 if antithetic else paths
     totals = np.zeros(base_count, dtype=float)
     for _ in range(steps):
+        check_execution()
         totals += generator.standard_normal(base_count)
     normals = totals / sqrt(steps)
     if not antithetic:
@@ -100,6 +103,7 @@ def solve_monte_carlo(
     prices[0] = np.maximum(intrinsic, 0.0) if side == "call" else np.maximum(-intrinsic, 0.0)
     standard_errors[0] = 0.0
     for time_index, tau in enumerate(target_times[1:], start=1):
+        check_execution()
         samples = _discounted_payoffs(inputs, side, float(tau), target_spots, normals)
         prices[time_index], standard_errors[time_index] = _mean_and_error(samples, antithetic)
 

@@ -28,6 +28,9 @@ const valid: SolverParameters = {
   barrierDirection: "down",
   barrierStyle: "out",
   barrierLevel: 90,
+  asianAverageType: "arithmetic",
+  asianObservations: 12,
+  asianAverageState: 100,
 };
 
 describe("validateParameters", () => {
@@ -74,5 +77,34 @@ describe("validateParameters", () => {
 
   it("rejects a non-positive barrier", () => {
     expect(validateParameters({ ...valid, optionFamily: "barrier", barrierLevel: 0 })).toMatch(/barrier level/i);
+  });
+
+  it("rejects a barrier Monte Carlo grid above the memory budget", () => {
+    expect(validateParameters({
+      ...valid,
+      optionFamily: "barrier",
+      methods: ["monte_carlo"],
+      monteCarloSteps: 512,
+    })).toMatch(/4,000,000 node memory budget/i);
+  });
+
+  it("accounts for American reference and PSOR work", () => {
+    expect(estimateOperations({
+      ...valid,
+      optionFamily: "american",
+      methods: ["finite_difference"],
+    })).toBeGreaterThan(valid.finiteDifferenceSpotSteps * valid.finiteDifferenceTimeSteps);
+  });
+
+  it("accepts arithmetic Asian methods", () => {
+    expect(validateParameters({ ...valid, optionFamily: "asian", methods: ["finite_difference", "monte_carlo"] })).toBeNull();
+  });
+
+  it("limits Asian analytical pricing to geometric averages", () => {
+    expect(validateParameters({ ...valid, optionFamily: "asian", methods: ["closed_form"] })).toMatch(/geometric Asian/i);
+  });
+
+  it("validates Asian observation count", () => {
+    expect(validateParameters({ ...valid, optionFamily: "asian", methods: ["monte_carlo"], asianObservations: 1 })).toMatch(/between 2 and 60/i);
   });
 });

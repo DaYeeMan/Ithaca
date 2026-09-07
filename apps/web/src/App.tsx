@@ -2,7 +2,6 @@ import { lazy, Suspense, useCallback, useEffect, useRef, useState, useTransition
 import {
   BarChart3,
   FunctionSquare,
-  Menu,
   Play,
   RotateCcw,
   SlidersHorizontal,
@@ -21,6 +20,7 @@ const FAMILY_METHODS: Record<OptionFamily, SolverMethod[]> = {
   european: ["closed_form", "finite_difference", "monte_carlo"],
   american: ["binomial", "finite_difference", "monte_carlo"],
   barrier: ["closed_form", "finite_difference", "monte_carlo"],
+  asian: ["finite_difference", "monte_carlo"],
 };
 
 const DEFAULT_PARAMETERS: SolverParameters = {
@@ -49,6 +49,9 @@ const DEFAULT_PARAMETERS: SolverParameters = {
   barrierDirection: "down",
   barrierStyle: "out",
   barrierLevel: 90,
+  asianAverageType: "arithmetic",
+  asianObservations: 12,
+  asianAverageState: 100,
 };
 
 type Status = "idle" | "solving" | "error";
@@ -63,6 +66,8 @@ export default function App() {
   const [message, setMessage] = useState<string | null>(null);
   const [mobilePanel, setMobilePanel] = useState<MobilePanel>(null);
   const activeRequest = useRef<AbortController | null>(null);
+  const sheetRef = useRef<HTMLElement | null>(null);
+  const panelTrigger = useRef<HTMLButtonElement | null>(null);
   const [, startTransition] = useTransition();
 
   useEffect(() => {
@@ -120,6 +125,15 @@ export default function App() {
     setMessage(null);
   }, []);
 
+  const changeAsianAverageType = useCallback((averageType: "arithmetic" | "geometric") => {
+    const methods: SolverMethod[] = averageType === "geometric"
+      ? ["closed_form", "finite_difference", "monte_carlo"]
+      : ["finite_difference", "monte_carlo"];
+    setParameters((current) => ({ ...current, asianAverageType: averageType, methods }));
+    setActiveMethod(methods[0]);
+    setMessage(null);
+  }, []);
+
   const cancelSolve = useCallback(() => {
     activeRequest.current?.abort();
     activeRequest.current = null;
@@ -163,13 +177,48 @@ export default function App() {
     window.location.reload();
   }, []);
 
-  const availableMethods = capabilities?.option_families.find((family) => family.id === parameters.optionFamily)?.methods
+  const openMobilePanel = useCallback((panel: Exclude<MobilePanel, null>, trigger: HTMLButtonElement) => {
+    panelTrigger.current = trigger;
+    setMobilePanel(panel);
+  }, []);
+
+  const closeMobilePanel = useCallback(() => {
+    setMobilePanel(null);
+    window.setTimeout(() => panelTrigger.current?.focus(), 0);
+  }, []);
+
+  useEffect(() => {
+    if (!mobilePanel) return;
+    const sheet = sheetRef.current;
+    const focusable = () => Array.from(sheet?.querySelectorAll<HTMLElement>('button:not([disabled]), input:not([disabled]), select:not([disabled]), [href], [tabindex]:not([tabindex="-1"])') ?? []);
+    focusable()[0]?.focus();
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        closeMobilePanel();
+      } else if (event.key === "Tab") {
+        const items = focusable();
+        if (!items.length) return;
+        const first = items[0];
+        const last = items[items.length - 1];
+        if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+        if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+      }
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [closeMobilePanel, mobilePanel]);
+
+  const capabilityMethods = capabilities?.option_families.find((family) => family.id === parameters.optionFamily)?.methods
     ?? FAMILY_METHODS[parameters.optionFamily];
+  const availableMethods = parameters.optionFamily === "asian" && parameters.asianAverageType === "arithmetic"
+    ? capabilityMethods.filter((method) => method !== "closed_form")
+    : capabilityMethods;
 
   return (
     <main className="app-shell">
+      <a className="skip-link" href="#visualization">Skip to visualization</a>
       <header className="topbar">
-        <button className="icon-button menu-button" aria-label="Open navigation"><Menu /></button>
         <div className="wordmark">Ithaca</div>
         <div className="topbar-actions">
           <button className="secondary-button" type="button" onClick={reset}><RotateCcw size={17} />Reset</button>
@@ -185,38 +234,38 @@ export default function App() {
       </header>
 
       <aside className="problem-panel desktop-rail">
-        <ProblemPanel parameters={parameters} availableMethods={availableMethods} onChange={changeParameter} onFamilyChange={changeFamily} onToggleMethod={toggleMethod} />
+        <ProblemPanel parameters={parameters} availableMethods={availableMethods} onChange={changeParameter} onFamilyChange={changeFamily} onAsianAverageTypeChange={changeAsianAverageType} onToggleMethod={toggleMethod} />
       </aside>
 
-      <section className={`chart-panel${message ? " has-message" : ""}`}>
+      <section id="visualization" tabIndex={-1} className={`chart-panel${message ? " has-message" : ""}`}>
         <Suspense fallback={<div className="chart-loading"><span className="status-spinner" />Loading visualization…</div>}>
-          <ChartPanel response={response} activeMethod={activeMethod} onActiveMethodChange={setActiveMethod} loading={status === "solving"} />
+          <ChartPanel response={response} activeMethod={activeMethod} onActiveMethodChange={setActiveMethod} loading={status === "solving"} family={parameters.optionFamily} averageState={parameters.asianAverageState} onAverageStateChange={(value) => changeParameter("asianAverageState", value)} />
         </Suspense>
         {message ? <div className="app-message" role="alert">{message}</div> : null}
       </section>
 
       <aside className="equation-panel desktop-rail">
-        <EquationPanel family={parameters.optionFamily} side={parameters.optionSide} method={activeMethod} barrierDirection={parameters.barrierDirection} barrierStyle={parameters.barrierStyle} barrierLevel={parameters.barrierLevel} />
+        <EquationPanel family={parameters.optionFamily} side={parameters.optionSide} method={activeMethod} barrierDirection={parameters.barrierDirection} barrierStyle={parameters.barrierStyle} barrierLevel={parameters.barrierLevel} asianAverageType={parameters.asianAverageType} asianObservations={parameters.asianObservations} asianAverageState={parameters.asianAverageState} />
       </aside>
 
       <ResultsStrip response={response} activeMethod={activeMethod} status={status} />
 
       <footer className="status-footer">
-        <span>Model: Black–Scholes</span><span>Currency: USD</span><span>Phase 4 · Barrier options</span>
+        <span>Model: Black–Scholes</span><span>Currency: USD</span><span>Release candidate</span>
       </footer>
 
       <nav className="mobile-nav" aria-label="Workbench panels">
-        <button className={mobilePanel === "problem" ? "active" : ""} onClick={() => setMobilePanel("problem")}><SlidersHorizontal /><span>Problem</span></button>
-        <button className={mobilePanel === "equation" ? "active" : ""} onClick={() => setMobilePanel("equation")}><FunctionSquare /><span>Equation</span></button>
-        <button className={mobilePanel === "results" ? "active" : ""} onClick={() => setMobilePanel("results")}><BarChart3 /><span>Results</span></button>
+        <button type="button" aria-expanded={mobilePanel === "problem"} className={mobilePanel === "problem" ? "active" : ""} onClick={(event) => openMobilePanel("problem", event.currentTarget)}><SlidersHorizontal /><span>Problem</span></button>
+        <button type="button" aria-expanded={mobilePanel === "equation"} className={mobilePanel === "equation" ? "active" : ""} onClick={(event) => openMobilePanel("equation", event.currentTarget)}><FunctionSquare /><span>Equation</span></button>
+        <button type="button" aria-expanded={mobilePanel === "results"} className={mobilePanel === "results" ? "active" : ""} onClick={(event) => openMobilePanel("results", event.currentTarget)}><BarChart3 /><span>Results</span></button>
       </nav>
 
       {mobilePanel ? (
-        <section className="mobile-sheet" aria-label={`${mobilePanel} panel`}>
+        <section ref={sheetRef} className="mobile-sheet" role="dialog" aria-modal="true" aria-label={`${mobilePanel} panel`}>
           <div className="sheet-handle" />
-          <button className="sheet-close" aria-label="Close panel" onClick={() => setMobilePanel(null)}><X /></button>
-          {mobilePanel === "problem" ? <ProblemPanel parameters={parameters} availableMethods={availableMethods} onChange={changeParameter} onFamilyChange={changeFamily} onToggleMethod={toggleMethod} /> : null}
-          {mobilePanel === "equation" ? <EquationPanel family={parameters.optionFamily} side={parameters.optionSide} method={activeMethod} barrierDirection={parameters.barrierDirection} barrierStyle={parameters.barrierStyle} barrierLevel={parameters.barrierLevel} /> : null}
+          <button type="button" className="sheet-close" aria-label="Close panel" onClick={closeMobilePanel}><X /></button>
+          {mobilePanel === "problem" ? <ProblemPanel parameters={parameters} availableMethods={availableMethods} onChange={changeParameter} onFamilyChange={changeFamily} onAsianAverageTypeChange={changeAsianAverageType} onToggleMethod={toggleMethod} /> : null}
+          {mobilePanel === "equation" ? <EquationPanel family={parameters.optionFamily} side={parameters.optionSide} method={activeMethod} barrierDirection={parameters.barrierDirection} barrierStyle={parameters.barrierStyle} barrierLevel={parameters.barrierLevel} asianAverageType={parameters.asianAverageType} asianObservations={parameters.asianObservations} asianAverageState={parameters.asianAverageState} /> : null}
           {mobilePanel === "results" ? <ResultsStrip response={response} activeMethod={activeMethod} status={status} /> : null}
         </section>
       ) : null}

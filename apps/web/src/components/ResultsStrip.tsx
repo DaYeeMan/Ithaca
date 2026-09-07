@@ -25,10 +25,15 @@ export function ResultsStrip({
 }) {
   const result = response?.results.find((candidate) => candidate.method === activeMethod) ?? response?.results[0] ?? null;
   const interval = result?.confidence_interval;
+  const resultLabel = result?.diagnostics.scheme === "augmented-state CRR lattice"
+    ? "Augmented state"
+    : result?.diagnostics.solution === "discrete geometric-average analytical"
+      ? "Geometric analytical"
+      : result ? labels[result.method] : "Results";
 
   return (
-    <section className="results-strip" aria-label="Results">
-      <div className="results-heading">{result ? labels[result.method] : "Results"}</div>
+    <section className="results-strip" aria-label="Results" aria-live="polite" aria-atomic="true">
+      <div className="results-heading">{resultLabel}</div>
       <div className="metric primary-metric">
         <span>Price</span>
         <strong>{result ? result.price.toFixed(4) : "—"}</strong>

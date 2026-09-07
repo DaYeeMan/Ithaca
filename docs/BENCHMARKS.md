@@ -1,6 +1,6 @@
 # Numerical Benchmark Specification
 
-Status: European Phase 2, American Phase 3, and barrier Phase 4 gates are locked and passing. The Asian expected values remain to be locked before Phase 5 implementation.
+Status: European Phase 2, American Phase 3, barrier Phase 4, and Asian Phase 5 gates are locked and passing.
 
 ## Conventions
 
@@ -152,13 +152,38 @@ Locked Phase 4 results:
 
 Fixed-strike geometric-average call and put with `S=100`, `K=100`, `T=1`, `sigma=0.20`, `r=0.05`, `q=0`, and 12 equally spaced monthly observations.
 
-Lock values from the discrete geometric-Asian analytical formula before Phase 5. Use these values to validate simulation, monitoring dates, discounting, and average-state conventions.
+Locked analytical values:
+
+| Result | Expected |
+| --- | ---: |
+| Call | 5.940200221633520 |
+| Put | 3.651734175909653 |
+
+The test oracle evaluates the independent lognormal-density integral with SciPy adaptive quadrature. Production uses the discrete geometric-average lognormal formula. Both use observation dates `t_i = iT/12`, `i=1,...,12`; spot at `t=0` does not participate. This convention follows the discretely monitored fixed-strike setup in [L'Ecuyer's Asian-option RQMC example](https://www.iro.umontreal.ca/~lecuyer/myftp/slides/mcqmc2010plenary2.pdf) and the geometric control-variate method introduced by Kemna and Vorst.
 
 ### `AS-ARITHMETIC-MONTHLY`
 
 Fixed-strike arithmetic-average call and put with the same parameters and monitoring schedule.
 
-No closed form is claimed. Lock a reference from a high-precision randomized quasi-Monte Carlo run plus an independent implementation. Store reference standard error and run metadata with the expected value.
+No closed form is claimed. Locked randomized quasi-Monte Carlo references:
+
+| Result | Expected | Reference standard error |
+| --- | ---: | ---: |
+| Call | 6.15601997 | 0.00002060 |
+| Put | 3.53445370 | 0.00002173 |
+
+Reference metadata: 16 independent Owen-scrambled SciPy Sobol replicates, `2^19` paths per replicate, 12 inverse-normal dimensions, Cholesky Brownian construction, and exact geometric-payoff control variate. Total paths: 8,388,608. Seeds: `0` through `15`. Standard error is replicate-mean standard error.
+
+Independent check: NumPy MT19937 pseudo-random simulation with four million paths and the same analytical geometric control variate produced call `6.15595565` with standard error `0.00011887`, and put `3.53436485` with standard error `0.00007059`. Seeds were `314159` and `271828` respectively. Both intervals agree with the locked RQMC references.
+
+Phase 5 production conventions:
+
+- Fixed-strike averaging uses equally spaced future observations. Spot at `t=0` is excluded.
+- Geometric analytical pricing uses the exact discrete lognormal distribution.
+- Arithmetic Monte Carlo uses the matching geometric payoff as a control variate. Geometric Monte Carlo remains unadjusted for a direct benchmark check.
+- Augmented-state pricing uses CRR backward induction with observation-date average updates and interpolation on a 321-point running-average grid.
+- The augmented-state monthly baseline tolerance is `0.03` against locked call and put references.
+- Surface views show spot × remaining time × price at a fixed running-average state. The initial slice contains the scalar price.
 
 Acceptance:
 

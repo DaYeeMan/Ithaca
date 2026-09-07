@@ -1,5 +1,5 @@
 export type OptionSide = "call" | "put";
-export type OptionFamily = "european" | "american" | "barrier";
+export type OptionFamily = "european" | "american" | "barrier" | "asian";
 export type SolverMethod = "closed_form" | "binomial" | "finite_difference" | "monte_carlo";
 
 export interface SolverParameters {
@@ -28,6 +28,9 @@ export interface SolverParameters {
   barrierDirection: "down" | "up";
   barrierStyle: "in" | "out";
   barrierLevel: number;
+  asianAverageType: "arithmetic" | "geometric";
+  asianObservations: number;
+  asianAverageState: number;
 }
 
 export interface SurfaceResult {

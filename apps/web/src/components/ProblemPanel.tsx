@@ -8,6 +8,7 @@ interface ProblemPanelProps {
   availableMethods: SolverMethod[];
   onChange: <Key extends keyof SolverParameters>(key: Key, value: SolverParameters[Key]) => void;
   onFamilyChange: (family: OptionFamily) => void;
+  onAsianAverageTypeChange: (averageType: "arithmetic" | "geometric") => void;
   onToggleMethod: (method: SolverMethod) => void;
 }
 
@@ -18,7 +19,7 @@ const methodLabels: Record<SolverMethod, string> = {
   monte_carlo: "Monte Carlo",
 };
 
-export function ProblemPanel({ parameters, availableMethods, onChange, onFamilyChange, onToggleMethod }: ProblemPanelProps) {
+export function ProblemPanel({ parameters, availableMethods, onChange, onFamilyChange, onAsianAverageTypeChange, onToggleMethod }: ProblemPanelProps) {
   const estimatedOperations = estimateOperations(parameters);
   const workPercent = estimatedOperations / MAX_ESTIMATED_OPERATIONS;
 
@@ -34,7 +35,7 @@ export function ProblemPanel({ parameters, availableMethods, onChange, onFamilyC
             <option value="european">European</option>
             <option value="american">American</option>
             <option value="barrier">Barrier</option>
-            <option value="asian" disabled>Asian — planned</option>
+            <option value="asian">Asian</option>
           </select>
         </label>
         <label className="select-field">
@@ -78,6 +79,26 @@ export function ProblemPanel({ parameters, availableMethods, onChange, onFamilyC
         </section>
       ) : null}
 
+      {parameters.optionFamily === "asian" ? (
+        <section className="control-section">
+          <h3>Average <ChevronDown size={15} /></h3>
+          <label className="select-field">
+            <span>Average type</span>
+            <select aria-label="Asian average type" value={parameters.asianAverageType} onChange={(event) => onAsianAverageTypeChange(event.currentTarget.value as "arithmetic" | "geometric")}>
+              <option value="arithmetic">Arithmetic</option>
+              <option value="geometric">Geometric</option>
+            </select>
+          </label>
+          <NumberField label="Observations" symbol="n" value={parameters.asianObservations} min={2} max={60} step={1} onChange={(value) => onChange("asianObservations", value)} />
+          <NumberField label="Fixed average state" symbol="A" value={parameters.asianAverageState} min={0.01} max={1_000_000} step={1} onChange={(value) => onChange("asianAverageState", value)} />
+          <label className="select-field">
+            <span>Monitoring</span>
+            <select aria-label="Asian monitoring" value="discrete" disabled><option value="discrete">Equally spaced</option></select>
+          </label>
+          <p className="equation-note">Observations occur after t=0. Fixed A controls higher-dimensional chart slices.</p>
+        </section>
+      ) : null}
+
       <section className="control-section">
         <h3>Market <ChevronDown size={15} /></h3>
         <NumberField label="Spot" symbol="S₀" value={parameters.spot} min={0.01} step={1} onChange={(value) => onChange("spot", value)} />
@@ -118,7 +139,7 @@ export function ProblemPanel({ parameters, availableMethods, onChange, onFamilyC
               aria-pressed={selected}
               onClick={() => onToggleMethod(method)}
             >
-              <span><span className="radio-dot" />{methodLabels[method]}</span>
+              <span><span className="radio-dot" />{parameters.optionFamily === "asian" && method === "finite_difference" ? "Augmented state" : parameters.optionFamily === "asian" && method === "closed_form" ? "Geometric analytical" : methodLabels[method]}</span>
               {icon}
             </button>
           );
@@ -134,10 +155,10 @@ export function ProblemPanel({ parameters, availableMethods, onChange, onFamilyC
 
       {parameters.methods.includes("finite_difference") ? (
         <section className="control-section numerical-section">
-          <h3>Finite difference <ChevronDown size={15} /></h3>
-          <NumberField label="Spot steps" value={parameters.finiteDifferenceSpotSteps} min={51} max={801} step={10} onChange={(value) => onChange("finiteDifferenceSpotSteps", value)} />
+          <h3>{parameters.optionFamily === "asian" ? "Augmented state" : "Finite difference"} <ChevronDown size={15} /></h3>
+          {parameters.optionFamily !== "asian" ? <NumberField label="Spot steps" value={parameters.finiteDifferenceSpotSteps} min={51} max={801} step={10} onChange={(value) => onChange("finiteDifferenceSpotSteps", value)} /> : null}
           <NumberField label="Time steps" value={parameters.finiteDifferenceTimeSteps} min={20} max={2000} step={20} onChange={(value) => onChange("finiteDifferenceTimeSteps", value)} />
-          <NumberField label="Domain max" symbol="Sₘₐₓ" value={parameters.finiteDifferenceDomainMax} min={1} max={2_000_000} step={10} onChange={(value) => onChange("finiteDifferenceDomainMax", value)} />
+          {parameters.optionFamily !== "asian" ? <NumberField label="Domain max" symbol="Sₘₐₓ" value={parameters.finiteDifferenceDomainMax} min={1} max={2_000_000} step={10} onChange={(value) => onChange("finiteDifferenceDomainMax", value)} /> : null}
         </section>
       ) : null}
 
@@ -145,7 +166,7 @@ export function ProblemPanel({ parameters, availableMethods, onChange, onFamilyC
         <section className="control-section numerical-section">
           <h3>Monte Carlo settings <ChevronDown size={15} /></h3>
           <NumberField label="Paths" value={parameters.monteCarloPaths} min={1000} max={200000} step={1000} onChange={(value) => onChange("monteCarloPaths", value)} />
-          <NumberField label="Path steps" value={parameters.monteCarloSteps} min={1} max={512} step={8} onChange={(value) => onChange("monteCarloSteps", value)} />
+          {parameters.optionFamily !== "asian" ? <NumberField label="Path steps" value={parameters.monteCarloSteps} min={1} max={512} step={8} onChange={(value) => onChange("monteCarloSteps", value)} /> : null}
           <NumberField label="Seed" value={parameters.monteCarloSeed} min={0} max={2_147_483_647} step={1} onChange={(value) => onChange("monteCarloSeed", value)} />
           <label className="toggle-field">
             <span>Antithetic</span>

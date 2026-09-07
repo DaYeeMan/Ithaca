@@ -61,8 +61,16 @@ class BarrierSettings(BaseModel):
     rebate: Literal[0] = 0
 
 
+class AsianSettings(BaseModel):
+    average_type: Literal["arithmetic", "geometric"] = "arithmetic"
+    observations: int = Field(default=12, ge=2, le=60)
+    average_state: float = Field(default=100, gt=0, le=1_000_000)
+    monitoring: Literal["discrete"] = "discrete"
+    includes_initial_spot: Literal[False] = False
+
+
 class SolveRequest(BaseModel):
-    option_family: Literal["european", "american", "barrier"]
+    option_family: Literal["european", "american", "barrier", "asian"]
     option_side: Literal["call", "put"]
     methods: list[SolverMethod] = Field(min_length=1, max_length=3)
     market: MarketParameters
@@ -71,19 +79,18 @@ class SolveRequest(BaseModel):
     monte_carlo: MonteCarloSettings = Field(default_factory=MonteCarloSettings)
     binomial: BinomialSettings = Field(default_factory=BinomialSettings)
     barrier: BarrierSettings = Field(default_factory=BarrierSettings)
+    asian: AsianSettings = Field(default_factory=AsianSettings)
 
     @model_validator(mode="after")
     def validate_work(self) -> "SolveRequest":
         if len(set(self.methods)) != len(self.methods):
             raise ValueError("methods must not contain duplicates")
-        allowed = (
-            {"binomial", "finite_difference", "monte_carlo"}
-            if self.option_family == "american"
-            else {"closed_form", "finite_difference", "monte_carlo"}
-        )
+        allowed = {"binomial", "finite_difference", "monte_carlo"} if self.option_family == "american" else {"closed_form", "finite_difference", "monte_carlo"}
         if not set(self.methods).issubset(allowed):
             raise ValueError(f"methods are not compatible with {self.option_family} options")
-        if "finite_difference" in self.methods:
+        if self.option_family == "asian" and self.asian.average_type == "arithmetic" and "closed_form" in self.methods:
+            raise ValueError("closed_form is only compatible with geometric Asian averaging")
+        if "finite_difference" in self.methods and self.option_family != "asian":
             required_domain = max(self.market.spot, self.surface.spot_max)
             if self.finite_difference.domain_max < required_domain:
                 raise ValueError("finite_difference.domain_max must cover spot and surface maximum")
@@ -92,6 +99,9 @@ class SolveRequest(BaseModel):
         if self.option_family == "american" and "monte_carlo" in self.methods:
             if self.monte_carlo.paths * self.monte_carlo.steps > 20_000_000:
                 raise ValueError("American Monte Carlo path grid exceeds the 20,000,000 node memory budget")
+        if self.option_family == "barrier" and "monte_carlo" in self.methods:
+            if self.monte_carlo.paths * self.monte_carlo.steps > 4_000_000:
+                raise ValueError("Barrier Monte Carlo path grid exceeds the 4,000,000 node memory budget")
         if self.option_family == "barrier" and self.barrier.direction == "down":
             if "finite_difference" in self.methods and self.finite_difference.domain_max <= self.barrier.level:
                 raise ValueError("finite_difference.domain_max must exceed a down barrier")
@@ -99,16 +109,32 @@ class SolveRequest(BaseModel):
 
     def estimated_operations(self) -> int:
         operations = self.surface.spot_steps * self.surface.time_steps
+        if self.option_family == "american":
+            operations += self.binomial.steps**2 // 2
+        elif self.option_family == "asian" and self.asian.average_type == "arithmetic":
+            lattice_steps = self.asian.observations * max(
+                4,
+                min(12, (self.finite_difference.time_steps + self.asian.observations - 1) // self.asian.observations),
+            )
+            operations += lattice_steps**2 * 321 // 2
         if "binomial" in self.methods:
             surface_tree_steps = min(self.binomial.steps, 100)
             operations += self.binomial.steps**2 // 2
             operations += self.surface.time_steps * self.surface.spot_steps * surface_tree_steps**2 // 2
         if "finite_difference" in self.methods:
-            operations += self.finite_difference.spot_steps * self.finite_difference.time_steps
+            if self.option_family == "asian":
+                lattice_steps = self.asian.observations * max(
+                    4,
+                    min(12, (self.finite_difference.time_steps + self.asian.observations - 1) // self.asian.observations),
+                )
+                operations += lattice_steps**2 * 321 // 2
+            elif self.option_family == "american":
+                operations += self.finite_difference.spot_steps * self.finite_difference.time_steps * 250
+            else:
+                operations += self.finite_difference.spot_steps * self.finite_difference.time_steps
         if "monte_carlo" in self.methods:
-            operations += self.monte_carlo.paths * (
-                self.monte_carlo.steps + self.surface.spot_steps * self.surface.time_steps
-            )
+            path_steps = self.asian.observations if self.option_family == "asian" else self.monte_carlo.steps
+            operations += self.monte_carlo.paths * (path_steps + self.surface.spot_steps * self.surface.time_steps)
         return operations
 
 

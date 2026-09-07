@@ -4,6 +4,8 @@ from math import exp
 from time import perf_counter
 
 import numpy as np
+
+from app.execution import check_execution
 from scipy.linalg import solve_banded
 
 from app.solvers.black_scholes import MarketInputs, OptionSide
@@ -75,6 +77,7 @@ def solve_finite_difference(
     banded[2, :-1] = -alpha[1:]
 
     for time_index in range(grid_time_steps):
+        check_execution()
         tau_now = times[time_index]
         tau_next = times[time_index + 1]
         lower_now, upper_now = _boundaries(inputs, side, domain_max, tau_now)
