@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { ChevronDown } from "lucide-react";
 import { estimateOperations, MAX_ESTIMATED_OPERATIONS } from "../lib/validation";
 import type { OptionFamily, SolverParameters } from "../types";
@@ -10,6 +11,18 @@ interface ProblemPanelProps {
   onAsianAverageTypeChange: (averageType: "arithmetic" | "geometric") => void;
 }
 
+function ControlSection({ title, numerical = false, children }: { title: string; numerical?: boolean; children: ReactNode }) {
+  return (
+    <details className={`control-section${numerical ? " numerical-section" : ""}`} open>
+      <summary>
+        <span>{title}</span>
+        <ChevronDown aria-hidden="true" size={15} />
+      </summary>
+      <div className="control-section-content">{children}</div>
+    </details>
+  );
+}
+
 export function ProblemPanel({ parameters, onChange, onFamilyChange, onAsianAverageTypeChange }: ProblemPanelProps) {
   const estimatedOperations = estimateOperations(parameters);
   const workPercent = estimatedOperations / MAX_ESTIMATED_OPERATIONS;
@@ -18,8 +31,7 @@ export function ProblemPanel({ parameters, onChange, onFamilyChange, onAsianAver
     <div className="problem-content">
       <h2>Problem</h2>
 
-      <section className="control-section">
-        <h3>Contract <ChevronDown size={15} /></h3>
+      <ControlSection title="Contract">
         <label className="select-field">
           <span>Option family</span>
           <select value={parameters.optionFamily} aria-label="Option family" onChange={(event) => onFamilyChange(event.currentTarget.value as OptionFamily)}>
@@ -39,11 +51,10 @@ export function ProblemPanel({ parameters, onChange, onFamilyChange, onAsianAver
             <option value="put">Put</option>
           </select>
         </label>
-      </section>
+      </ControlSection>
 
       {parameters.optionFamily === "barrier" ? (
-        <section className="control-section">
-          <h3>Barrier <ChevronDown size={15} /></h3>
+        <ControlSection title="Barrier">
           <label className="select-field">
             <span>Direction</span>
             <select aria-label="Barrier direction" value={parameters.barrierDirection} onChange={(event) => onChange("barrierDirection", event.currentTarget.value as "down" | "up")}>
@@ -67,12 +78,11 @@ export function ProblemPanel({ parameters, onChange, onFamilyChange, onAsianAver
             <span>Rebate</span>
             <select aria-label="Barrier rebate" value="none" disabled><option value="none">None</option></select>
           </label>
-        </section>
+        </ControlSection>
       ) : null}
 
       {parameters.optionFamily === "asian" ? (
-        <section className="control-section">
-          <h3>Average <ChevronDown size={15} /></h3>
+        <ControlSection title="Average">
           <label className="select-field">
             <span>Average type</span>
             <select aria-label="Asian average type" value={parameters.asianAverageType} onChange={(event) => onAsianAverageTypeChange(event.currentTarget.value as "arithmetic" | "geometric")}>
@@ -87,21 +97,19 @@ export function ProblemPanel({ parameters, onChange, onFamilyChange, onAsianAver
             <select aria-label="Asian monitoring" value="discrete" disabled><option value="discrete">Equally spaced</option></select>
           </label>
           <p className="equation-note">Observations occur after t=0. Fixed A controls higher-dimensional chart slices.</p>
-        </section>
+        </ControlSection>
       ) : null}
 
-      <section className="control-section">
-        <h3>Market <ChevronDown size={15} /></h3>
+      <ControlSection title="Market">
         <NumberField label="Spot" symbol="S₀" value={parameters.spot} min={0.01} step={1} onChange={(value) => onChange("spot", value)} />
         <NumberField label="Strike" symbol="K" value={parameters.strike} min={0.01} step={1} onChange={(value) => onChange("strike", value)} />
         <NumberField label="Maturity" symbol="T" value={parameters.maturity} min={0.01} max={50} step={0.25} suffix="yr" onChange={(value) => onChange("maturity", value)} />
         <NumberField label="Volatility" symbol="σ" value={parameters.volatility * 100} min={0.01} max={500} step={1} suffix="%" onChange={(value) => onChange("volatility", value / 100)} />
         <NumberField label="Rate" symbol="r" value={parameters.rate * 100} min={-100} max={100} step={0.25} suffix="%" onChange={(value) => onChange("rate", value / 100)} />
         <NumberField label="Dividend" symbol="q" value={parameters.dividend * 100} min={-100} max={100} step={0.25} suffix="%" onChange={(value) => onChange("dividend", value / 100)} />
-      </section>
+      </ControlSection>
 
-      <section className="control-section">
-        <h3>Surface <ChevronDown size={15} /></h3>
+      <ControlSection title="Surface">
         <div className="range-row">
           <span>S range</span>
           <input aria-label="Minimum spot" type="number" value={parameters.spotMin} min={0} onChange={(event) => onChange("spotMin", event.currentTarget.valueAsNumber)} />
@@ -114,27 +122,24 @@ export function ProblemPanel({ parameters, onChange, onFamilyChange, onAsianAver
           <span>×</span>
           <input aria-label="Time grid count" type="number" value={parameters.timeSteps} min={20} max={160} onChange={(event) => onChange("timeSteps", event.currentTarget.valueAsNumber)} />
         </div>
-      </section>
+      </ControlSection>
 
       {parameters.methods.includes("binomial") ? (
-        <section className="control-section numerical-section">
-          <h3>Binomial tree <ChevronDown size={15} /></h3>
+        <ControlSection title="Binomial tree" numerical>
           <NumberField label="Steps" value={parameters.binomialSteps} min={50} max={4000} step={50} onChange={(value) => onChange("binomialSteps", value)} />
-        </section>
+        </ControlSection>
       ) : null}
 
       {parameters.methods.includes("finite_difference") ? (
-        <section className="control-section numerical-section">
-          <h3>{parameters.optionFamily === "asian" ? "Augmented state" : "Finite difference"} <ChevronDown size={15} /></h3>
+        <ControlSection title={parameters.optionFamily === "asian" ? "Augmented state" : "Finite difference"} numerical>
           {parameters.optionFamily !== "asian" ? <NumberField label="Spot steps" value={parameters.finiteDifferenceSpotSteps} min={51} max={801} step={10} onChange={(value) => onChange("finiteDifferenceSpotSteps", value)} /> : null}
           <NumberField label="Time steps" value={parameters.finiteDifferenceTimeSteps} min={20} max={2000} step={20} onChange={(value) => onChange("finiteDifferenceTimeSteps", value)} />
           {parameters.optionFamily !== "asian" ? <NumberField label="Domain max" symbol="Sₘₐₓ" value={parameters.finiteDifferenceDomainMax} min={1} max={2_000_000} step={10} onChange={(value) => onChange("finiteDifferenceDomainMax", value)} /> : null}
-        </section>
+        </ControlSection>
       ) : null}
 
       {parameters.methods.includes("monte_carlo") ? (
-        <section className="control-section numerical-section">
-          <h3>Monte Carlo settings <ChevronDown size={15} /></h3>
+        <ControlSection title="Monte Carlo settings" numerical>
           <NumberField label="Paths" value={parameters.monteCarloPaths} min={1000} max={200000} step={1000} onChange={(value) => onChange("monteCarloPaths", value)} />
           {parameters.optionFamily !== "asian" ? <NumberField label="Path steps" value={parameters.monteCarloSteps} min={1} max={512} step={8} onChange={(value) => onChange("monteCarloSteps", value)} /> : null}
           <NumberField label="Seed" value={parameters.monteCarloSeed} min={0} max={2_147_483_647} step={1} onChange={(value) => onChange("monteCarloSeed", value)} />
@@ -150,7 +155,7 @@ export function ProblemPanel({ parameters, onChange, onFamilyChange, onAsianAver
               <option value={0.99}>99%</option>
             </select>
           </label>
-        </section>
+        </ControlSection>
       ) : null}
 
       <div className={`work-estimate ${workPercent > 0.8 ? "warning" : ""}`}>

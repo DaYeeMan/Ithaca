@@ -17,8 +17,14 @@ function ScientificPlot({ data, layout, label }: { data: Data[]; layout: Partial
 
   useEffect(() => {
     const node = container.current;
+    if (!node) return;
+    const observer = new ResizeObserver(() => {
+      if (node.classList.contains("js-plotly-plot")) void Plotly.Plots.resize(node);
+    });
+    observer.observe(node);
     return () => {
-      if (node) Plotly.purge(node);
+      observer.disconnect();
+      Plotly.purge(node);
     };
   }, []);
 
@@ -339,14 +345,23 @@ export function ChartPanel({
     showlegend: true,
   };
 
+  const surfaceSpotRange: [number, number] | undefined = activeResult
+    ? [activeResult.surface.spots[0], activeResult.surface.spots.at(-1)! * 1.06]
+    : undefined;
+  const surfaceTimeRange: [number, number] | undefined = activeResult
+    ? [activeResult.surface.times_to_maturity[0], activeResult.surface.times_to_maturity.at(-1)! * 1.06]
+    : undefined;
+
   const surfaceLayout: Partial<Layout> = {
     ...commonLayout,
+    margin: { l: 0, r: 0, t: 0, b: 0 },
+    legend: { orientation: "h", x: 0.01, y: 0.99, font: { ...baseFont, size: 10 }, bgcolor: "rgba(3,16,29,.72)" },
     uirevision: "price-surface",
     scene: {
       bgcolor: "rgba(0,0,0,0)",
-      camera: { eye: { x: 1.5, y: -1.65, z: 0.85 } },
-      xaxis: { title: { text: "Spot (S)" }, gridcolor: "#334454", zerolinecolor: "#536474", color: "#dfe8ef" },
-      yaxis: { title: { text: "Time to maturity (τ, yrs)" }, gridcolor: "#334454", zerolinecolor: "#536474", color: "#dfe8ef" },
+      camera: { eye: { x: 1.65, y: -1.78, z: 2.05 } },
+      xaxis: { title: { text: "Spot (S)" }, range: surfaceSpotRange, gridcolor: "#334454", zerolinecolor: "#536474", color: "#dfe8ef" },
+      yaxis: { title: { text: "τ (yr)" }, range: surfaceTimeRange, gridcolor: "#334454", zerolinecolor: "#536474", color: "#dfe8ef" },
       zaxis: { title: { text: "Price" }, gridcolor: "#334454", zerolinecolor: "#536474", color: "#dfe8ef" },
       aspectmode: "manual",
       aspectratio: { x: 1.35, y: 1, z: 0.8 },
@@ -415,7 +430,7 @@ export function ChartPanel({
         >{item.label}</button>)}
       </div>
 
-      <div id="chart-tabpanel" role="tabpanel" aria-labelledby={`chart-tab-${visibleTab}`} className={`chart-stage ${loading ? "loading" : ""}`} aria-busy={loading}>
+      <div id="chart-tabpanel" role="tabpanel" aria-labelledby={`chart-tab-${visibleTab}`} className={`chart-stage ${visibleTab === "surface" ? "surface-stage " : ""}${loading ? "loading" : ""}`} aria-busy={loading}>
         <p className="sr-only">{chartLabel}</p>
         {activeResult ? (
           <ScientificPlot data={plotData} layout={plotLayout} label={chartLabel} />
