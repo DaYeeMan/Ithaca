@@ -10,9 +10,9 @@ import {
 import { EquationPanel } from "./components/EquationPanel";
 import { ProblemPanel } from "./components/ProblemPanel";
 import { ResultsStrip } from "./components/ResultsStrip";
-import { getCapabilities, solveOption } from "./lib/api";
+import { solveOption } from "./lib/api";
 import { validateParameters } from "./lib/validation";
-import type { Capabilities, OptionFamily, SolveResponse, SolverMethod, SolverParameters } from "./types";
+import type { OptionFamily, SolveResponse, SolverMethod, SolverParameters } from "./types";
 
 const ChartPanel = lazy(() => import("./components/ChartPanel").then((module) => ({ default: module.ChartPanel })));
 
@@ -60,7 +60,6 @@ type MobilePanel = "problem" | "equation" | "results" | null;
 export default function App() {
   const [parameters, setParameters] = useState<SolverParameters>(DEFAULT_PARAMETERS);
   const [response, setResponse] = useState<SolveResponse | null>(null);
-  const [capabilities, setCapabilities] = useState<Capabilities | null>(null);
   const [activeMethod, setActiveMethod] = useState<SolverMethod>("closed_form");
   const [status, setStatus] = useState<Status>("solving");
   const [message, setMessage] = useState<string | null>(null);
@@ -73,7 +72,6 @@ export default function App() {
   useEffect(() => {
     const controller = new AbortController();
     activeRequest.current = controller;
-    getCapabilities(controller.signal).then(setCapabilities).catch(() => undefined);
     solveOption(DEFAULT_PARAMETERS, controller.signal)
       .then((nextResponse) => {
         startTransition(() => setResponse(nextResponse));
@@ -98,20 +96,6 @@ export default function App() {
     setParameters((current) => ({ ...current, [key]: value }));
     setMessage(null);
   }, []);
-
-  const toggleMethod = useCallback((method: SolverMethod) => {
-    const selected = parameters.methods.includes(method);
-    if (selected && parameters.methods.length === 1) {
-      setMessage("Select at least one solution method.");
-      return;
-    }
-    const methods = selected
-      ? parameters.methods.filter((candidate) => candidate !== method)
-      : FAMILY_METHODS[parameters.optionFamily].filter((candidate) => parameters.methods.includes(candidate) || candidate === method);
-    setParameters((current) => ({ ...current, methods }));
-    if (!methods.includes(activeMethod)) setActiveMethod(methods[0]);
-    setMessage(null);
-  }, [activeMethod, parameters.methods, parameters.optionFamily]);
 
   const changeFamily = useCallback((family: OptionFamily) => {
     const methods = FAMILY_METHODS[family];
@@ -209,12 +193,6 @@ export default function App() {
     return () => document.removeEventListener("keydown", onKeyDown);
   }, [closeMobilePanel, mobilePanel]);
 
-  const capabilityMethods = capabilities?.option_families.find((family) => family.id === parameters.optionFamily)?.methods
-    ?? FAMILY_METHODS[parameters.optionFamily];
-  const availableMethods = parameters.optionFamily === "asian" && parameters.asianAverageType === "arithmetic"
-    ? capabilityMethods.filter((method) => method !== "closed_form")
-    : capabilityMethods;
-
   return (
     <main className="app-shell">
       <a className="skip-link" href="#visualization">Skip to visualization</a>
@@ -234,7 +212,7 @@ export default function App() {
       </header>
 
       <aside className="problem-panel desktop-rail">
-        <ProblemPanel parameters={parameters} availableMethods={availableMethods} onChange={changeParameter} onFamilyChange={changeFamily} onAsianAverageTypeChange={changeAsianAverageType} onToggleMethod={toggleMethod} />
+        <ProblemPanel parameters={parameters} onChange={changeParameter} onFamilyChange={changeFamily} onAsianAverageTypeChange={changeAsianAverageType} />
       </aside>
 
       <section id="visualization" tabIndex={-1} className={`chart-panel${message ? " has-message" : ""}`}>
@@ -264,7 +242,7 @@ export default function App() {
         <section ref={sheetRef} className="mobile-sheet" role="dialog" aria-modal="true" aria-label={`${mobilePanel} panel`}>
           <div className="sheet-handle" />
           <button type="button" className="sheet-close" aria-label="Close panel" onClick={closeMobilePanel}><X /></button>
-          {mobilePanel === "problem" ? <ProblemPanel parameters={parameters} availableMethods={availableMethods} onChange={changeParameter} onFamilyChange={changeFamily} onAsianAverageTypeChange={changeAsianAverageType} onToggleMethod={toggleMethod} /> : null}
+          {mobilePanel === "problem" ? <ProblemPanel parameters={parameters} onChange={changeParameter} onFamilyChange={changeFamily} onAsianAverageTypeChange={changeAsianAverageType} /> : null}
           {mobilePanel === "equation" ? <EquationPanel family={parameters.optionFamily} side={parameters.optionSide} method={activeMethod} barrierDirection={parameters.barrierDirection} barrierStyle={parameters.barrierStyle} barrierLevel={parameters.barrierLevel} asianAverageType={parameters.asianAverageType} asianObservations={parameters.asianObservations} asianAverageState={parameters.asianAverageState} /> : null}
           {mobilePanel === "results" ? <ResultsStrip response={response} activeMethod={activeMethod} status={status} /> : null}
         </section>

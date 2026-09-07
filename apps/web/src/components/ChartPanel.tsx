@@ -121,10 +121,9 @@ export function ChartPanel({
         [0.78, "#8bcf43"],
         [1, "#ffcb2c"],
       ],
-      colorbar: { title: { text: "Price", font: baseFont }, orientation: "h", x: 0.5, y: -0.08, len: 0.58, thickness: 10, tickfont: baseFont },
       contours: { x: { show: true, color: "rgba(255,255,255,.28)", width: 1 }, y: { show: true, color: "rgba(255,255,255,.28)", width: 1 } },
       hovertemplate: `Spot %{x:.2f}<br>τ %{y:.3f} yr<br>Price %{z:.4f}<extra>${resultLabel(activeResult)}</extra>`,
-      showscale: true,
+      showscale: false,
     } as Data];
 
     for (const result of response?.results ?? []) {

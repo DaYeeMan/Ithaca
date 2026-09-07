@@ -10,7 +10,27 @@ Ithaca has two stateless deployments: the Vite frontend on Vercel and the FastAP
 4. Set Vercel `VITE_SOLVER_API_URL` to the HTTPS backend origin, then deploy the repository using `vercel.json`.
 5. Run `python scripts/smoke_test.py --frontend https://... --api https://...`.
 
-Production builds must set `VITE_SOLVER_API_URL`; the localhost fallback exists only for local development. Vite embeds this value at build time, so changing it requires a new frontend deployment.
+Production builds must set `VITE_SOLVER_API_URL`; the localhost fallback exists only for local development. Vite embeds this value at build time, so changing it requires a new frontend deployment. Vercel builds fail immediately when the value is missing, malformed, or not HTTPS.
+
+## Vercel setup
+
+Run these commands from the repository root after the backend is reachable over HTTPS:
+
+```powershell
+npx --yes vercel@59.11.7 login
+npx --yes vercel@59.11.7 link
+npx --yes vercel@59.11.7 env add VITE_SOLVER_API_URL preview
+npx --yes vercel@59.11.7 env add VITE_SOLVER_API_URL production
+npx --yes vercel@59.11.7
+```
+
+Enter the backend origin, without a trailing path, for both environment prompts. Add the preview deployment origin to `ITHACA_ALLOWED_ORIGINS` on the backend, verify it with the smoke test, then promote with:
+
+```powershell
+npx --yes vercel@59.11.7 --prod
+```
+
+If the backend origin changes, update both Vercel environment values and redeploy. Do not put backend secrets in variables beginning with `VITE_`; those values are embedded in public browser assets.
 
 ## Runtime controls
 

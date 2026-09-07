@@ -1,6 +1,6 @@
 import type { Capabilities, SolveResponse, SolverParameters } from "../types";
 
-const API_BASE_URL = import.meta.env.VITE_SOLVER_API_URL ?? import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000";
+const API_BASE_URL = (import.meta.env.VITE_SOLVER_API_URL ?? import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000").replace(/\/+$/, "");
 const REQUEST_TIMEOUT_MS = 32_000;
 
 async function apiFetch(path: string, init: RequestInit = {}, signal?: AbortSignal): Promise<Response> {

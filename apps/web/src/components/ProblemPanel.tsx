@@ -1,25 +1,16 @@
-import { ChevronDown, Dices, FunctionSquare, Grid3X3 } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { estimateOperations, MAX_ESTIMATED_OPERATIONS } from "../lib/validation";
-import type { OptionFamily, SolverMethod, SolverParameters } from "../types";
+import type { OptionFamily, SolverParameters } from "../types";
 import { NumberField } from "./NumberField";
 
 interface ProblemPanelProps {
   parameters: SolverParameters;
-  availableMethods: SolverMethod[];
   onChange: <Key extends keyof SolverParameters>(key: Key, value: SolverParameters[Key]) => void;
   onFamilyChange: (family: OptionFamily) => void;
   onAsianAverageTypeChange: (averageType: "arithmetic" | "geometric") => void;
-  onToggleMethod: (method: SolverMethod) => void;
 }
 
-const methodLabels: Record<SolverMethod, string> = {
-  closed_form: "Closed form",
-  binomial: "Binomial tree",
-  finite_difference: "Finite difference",
-  monte_carlo: "Monte Carlo",
-};
-
-export function ProblemPanel({ parameters, availableMethods, onChange, onFamilyChange, onAsianAverageTypeChange, onToggleMethod }: ProblemPanelProps) {
+export function ProblemPanel({ parameters, onChange, onFamilyChange, onAsianAverageTypeChange }: ProblemPanelProps) {
   const estimatedOperations = estimateOperations(parameters);
   const workPercent = estimatedOperations / MAX_ESTIMATED_OPERATIONS;
 
@@ -123,27 +114,6 @@ export function ProblemPanel({ parameters, availableMethods, onChange, onFamilyC
           <span>×</span>
           <input aria-label="Time grid count" type="number" value={parameters.timeSteps} min={20} max={160} onChange={(event) => onChange("timeSteps", event.currentTarget.valueAsNumber)} />
         </div>
-      </section>
-
-      <section className="control-section methods-section">
-        <h3>Methods</h3>
-        {availableMethods.map((method) => {
-          const selected = parameters.methods.includes(method);
-          const icon = method === "closed_form" || method === "binomial" ? <FunctionSquare size={18} />
-            : method === "finite_difference" ? <Grid3X3 size={18} /> : <Dices size={18} />;
-          return (
-            <button
-              key={method}
-              type="button"
-              className={`method-row ${selected ? "selected" : ""}`}
-              aria-pressed={selected}
-              onClick={() => onToggleMethod(method)}
-            >
-              <span><span className="radio-dot" />{parameters.optionFamily === "asian" && method === "finite_difference" ? "Augmented state" : parameters.optionFamily === "asian" && method === "closed_form" ? "Geometric analytical" : methodLabels[method]}</span>
-              {icon}
-            </button>
-          );
-        })}
       </section>
 
       {parameters.methods.includes("binomial") ? (

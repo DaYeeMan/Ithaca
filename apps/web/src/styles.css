@@ -24,6 +24,9 @@ html, body, #root { min-width: 320px; min-height: 100%; margin: 0; }
 body { min-height: 100vh; background: var(--bg); }
 button, input, select { font: inherit; }
 button { color: inherit; }
+input[type="number"] { appearance: textfield; -moz-appearance: textfield; }
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
 button:focus-visible, input:focus-visible, select:focus-visible {
   outline: 2px solid var(--cyan);
   outline-offset: 2px;
@@ -129,25 +132,6 @@ h2 { margin: 0; font: 23px/1.2 var(--serif); font-weight: 400; }
 .number-suffix { min-width: 36px; display: grid; place-items: center; color: var(--muted); border-left: 1px solid var(--line-soft); }
 .range-row { display: grid; grid-template-columns: 1fr 66px 12px 66px; align-items: center; gap: 5px; min-height: 38px; color: #dce4e9; font-size: 13px; }
 .range-row input { padding: 0 7px; }
-.method-row {
-  width: 100%;
-  min-height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  border: 1px solid var(--line);
-  border-bottom: 0;
-  background: transparent;
-  padding: 0 10px;
-  font-size: 13px;
-}
-.method-row:last-child { border-bottom: 1px solid var(--line); }
-.method-row > span:first-child { display: flex; align-items: center; gap: 9px; }
-.method-row.selected { color: var(--cyan-soft); background: rgba(36, 213, 231, 0.05); }
-.method-row:disabled { color: #72808b; }
-.radio-dot { width: 16px; height: 16px; border: 1px solid currentColor; border-radius: 50%; position: relative; }
-.selected .radio-dot::after { content: ""; position: absolute; inset: 4px; border-radius: 50%; background: var(--cyan); }
-.dots-icon { letter-spacing: 2px; }
 .numerical-section { padding-top: 2px; border-top: 1px solid var(--line-soft); }
 .work-estimate { margin: 18px 0 2px; color: var(--muted); font-size: 11px; line-height: 1.4; }
 .work-estimate.warning { color: var(--amber); }
