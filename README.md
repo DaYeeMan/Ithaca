@@ -24,7 +24,7 @@ npm --prefix apps/web install
 npm run dev:web -- --host 127.0.0.1
 ```
 
-Open `http://127.0.0.1:5173`. Override the API URL with `VITE_SOLVER_API_URL` when the service is not at `http://127.0.0.1:8000`.
+Open `http://127.0.0.1:5173`. Vite proxies `/health` and `/v1` to the local API on port 8000, matching the same-origin production routes. Set `VITE_SOLVER_API_URL` only when deliberately using an external API host.
 
 ## Checks
 

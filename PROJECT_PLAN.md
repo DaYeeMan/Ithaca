@@ -195,7 +195,7 @@ Use synchronous HTTP for bounded MVP calculations. Add background jobs only afte
 ### Deployment and persistence
 
 - Deploy the web application to Vercel.
-- Host numerical computation in a separate Python/FastAPI service; Vercel hosts the frontend.
+- Host numerical computation in a Python/FastAPI Vercel Service beside the Vite frontend, with same-origin routing.
 - Save no user configurations, results, uploaded data, or accounts.
 - Keep the application stateless between page loads.
 - Keep default calculations under 5 seconds. Allow explicitly gated advanced calculations up to 30 seconds.
@@ -396,7 +396,7 @@ Exit: production deployment meets correctness, accessibility, and performance ga
 
 - Asian: fixed-strike arithmetic average with discrete monitoring. Add a geometric-average analytical benchmark.
 - Barrier: support single up/down and in/out contracts with continuous monitoring and no rebate initially.
-- Compute: Vercel frontend plus a separate Python/FastAPI numerical service. Browser remains visualization-focused.
+- Compute: Vercel Services with a Vite frontend and Python/FastAPI numerical service. Browser remains visualization-focused.
 - Higher-dimensional charts: show spot × time × price while an average-state slider fixes the additional Asian state.
 - Monte Carlo: include an optional sample-path chart plus price surface, confidence bands, and convergence.
 - Compute budget: default runs under 5 seconds; explicitly gated advanced runs may take up to 30 seconds.

@@ -17,10 +17,16 @@ function ScientificPlot({ data, layout, label }: { data: Data[]; layout: Partial
 
   useEffect(() => {
     const node = container.current;
+    return () => {
+      if (node) Plotly.purge(node);
+    };
+  }, []);
+
+  useEffect(() => {
+    const node = container.current;
     if (!node) return;
     const plotLayout = JSON.parse(JSON.stringify(layout)) as Partial<Layout>;
     void Plotly.react(node, data, plotLayout, plotConfig);
-    return () => Plotly.purge(node);
   }, [data, layout]);
 
   return <div ref={container} role="img" aria-label={label} style={{ width: "100%", height: "100%" }} />;
@@ -335,6 +341,7 @@ export function ChartPanel({
 
   const surfaceLayout: Partial<Layout> = {
     ...commonLayout,
+    uirevision: "price-surface",
     scene: {
       bgcolor: "rgba(0,0,0,0)",
       camera: { eye: { x: 1.5, y: -1.65, z: 0.85 } },

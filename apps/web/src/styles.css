@@ -41,12 +41,11 @@ button:focus-visible, input:focus-visible, select:focus-visible {
   overflow: hidden;
   display: grid;
   grid-template-columns: 310px minmax(520px, 1fr) 340px;
-  grid-template-rows: 68px minmax(0, 1fr) 132px 42px;
+  grid-template-rows: 68px minmax(0, 1fr) 132px;
   grid-template-areas:
     "header header header"
     "problem chart equation"
-    "results results results"
-    "footer footer footer";
+    "results results results";
   background:
     radial-gradient(circle at 53% 34%, rgba(12, 60, 88, 0.18), transparent 36%),
     var(--bg);
@@ -188,9 +187,6 @@ h2 { margin: 0; font: 23px/1.2 var(--serif); font-weight: 400; }
 .status-block svg:last-child { margin-left: auto; color: var(--muted); }
 .status-block.error { color: var(--danger); }
 .status-error { width: 20px; height: 20px; display: grid; place-items: center; border: 1px solid currentColor; border-radius: 50%; }
-.status-footer { grid-area: footer; display: flex; align-items: center; gap: 28px; padding: 0 22px; color: #85949f; font: 12px/1 var(--serif); }
-.status-footer span + span::before { content: "•"; margin-right: 28px; }
-
 .mobile-nav, .mobile-sheet { display: none; }
 
 @media (max-width: 1100px) {
@@ -216,7 +212,7 @@ h2 { margin: 0; font: 23px/1.2 var(--serif); font-weight: 400; }
   .wordmark { font-size: 31px; }
   .menu-button, .secondary-button { display: none; }
   .solve-button { min-width: 90px; }
-  .desktop-rail, .status-footer { display: none; }
+  .desktop-rail { display: none; }
   .chart-content { min-height: 550px; padding: 18px 14px 10px; }
   .chart-panel.has-message .chart-content { padding-bottom: 72px; }
   .chart-heading-row h2 { font-size: 25px; }

@@ -228,10 +228,6 @@ export default function App() {
 
       <ResultsStrip response={response} activeMethod={activeMethod} status={status} />
 
-      <footer className="status-footer">
-        <span>Model: Black–Scholes</span><span>Currency: USD</span><span>Release candidate</span>
-      </footer>
-
       <nav className="mobile-nav" aria-label="Workbench panels">
         <button type="button" aria-expanded={mobilePanel === "problem"} className={mobilePanel === "problem" ? "active" : ""} onClick={(event) => openMobilePanel("problem", event.currentTarget)}><SlidersHorizontal /><span>Problem</span></button>
         <button type="button" aria-expanded={mobilePanel === "equation"} className={mobilePanel === "equation" ? "active" : ""} onClick={(event) => openMobilePanel("equation", event.currentTarget)}><FunctionSquare /><span>Equation</span></button>

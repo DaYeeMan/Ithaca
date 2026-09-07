@@ -56,7 +56,7 @@ def integer_setting(name: str, default: int, minimum: int, maximum: int) -> int:
 
 REQUEST_TIMEOUT_SECONDS = integer_setting("ITHACA_REQUEST_TIMEOUT_SECONDS", 30, 1, 120)
 MAX_CONCURRENT_SOLVES = integer_setting("ITHACA_MAX_CONCURRENT_SOLVES", 2, 1, 32)
-SERVICE_ENVIRONMENT = os.getenv("ITHACA_ENVIRONMENT", "development")
+SERVICE_ENVIRONMENT = os.getenv("ITHACA_ENVIRONMENT", os.getenv("VERCEL_ENV", "development"))
 REQUEST_ID_PATTERN = re.compile(r"^[A-Za-z0-9._-]{1,64}$")
 logger = logging.getLogger("ithaca.api")
 if not logging.getLogger().handlers:

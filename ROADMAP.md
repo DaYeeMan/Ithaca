@@ -73,11 +73,12 @@ Phase 5 exit: geometric values match analytical benchmarks, arithmetic control-v
 - [x] Test responsive layouts across supported desktop and mobile widths
 - [x] Add API timeouts, cancellation, structured logs, and production diagnostics
 - [x] Run performance and security reviews
-- [ ] Deploy frontend to Vercel
-- [ ] Deploy FastAPI service separately and configure CORS/API URL
+- [x] Configure the Vite frontend and FastAPI backend as one Vercel Services deployment
+- [x] Route `/health` and `/v1/*` to FastAPI with same-origin browser requests
+- [x] Deploy and smoke-test the combined project on Vercel Hobby
 - [x] Add production smoke tests and operational documentation
 
-Phase 6 local hardening is complete. Production deployment is blocked on Vercel authentication and selection of the FastAPI container host.
+Phase 6 is complete. The production deployment at `https://ithaca-lake.vercel.app` passed health, diagnostics, pricing smoke, and live-browser solve checks on September 7, 2026.
 
 ## Deferred beyond initial release
 

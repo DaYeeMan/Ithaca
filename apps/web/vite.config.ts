@@ -3,11 +3,7 @@ import react from "@vitejs/plugin-react";
 
 const solverApiUrl = process.env.VITE_SOLVER_API_URL ?? process.env.VITE_API_BASE_URL;
 
-if (process.env.VERCEL) {
-  if (!solverApiUrl) {
-    throw new Error("VITE_SOLVER_API_URL must be set to the deployed HTTPS solver API before a Vercel build.");
-  }
-
+if (process.env.VERCEL && solverApiUrl) {
   let parsedSolverApiUrl: URL;
   try {
     parsedSolverApiUrl = new URL(solverApiUrl);
@@ -24,5 +20,12 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 5173,
+    proxy: {
+      "/health": "http://127.0.0.1:8000",
+      "/v1": {
+        target: "http://127.0.0.1:8000",
+        changeOrigin: true,
+      },
+    },
   },
 });
