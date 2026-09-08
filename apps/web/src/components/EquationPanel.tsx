@@ -19,6 +19,11 @@ export function EquationPanel({ family, side, method, barrierDirection, barrierS
   asianObservations: number;
   asianAverageState: number;
 }) {
+  const reference = method === "binomial" ? "crr"
+    : family === "asian" ? method === "finite_difference" ? "asian-lattice" : "asian-control-variate"
+    : method === "finite_difference" ? family === "american" ? "psor" : "crank-nicolson"
+    : method === "monte_carlo" ? family === "american" ? "longstaff-schwartz" : family === "barrier" ? "brownian-bridge" : "monte-carlo"
+    : family === "barrier" ? "reiner-rubinstein" : "black-scholes";
   const payoff = side === "call" ? "\\max(S-K,0)" : "\\max(K-S,0)";
   const methodName = method === "binomial"
     ? "Cox–Ross–Rubinstein"
@@ -80,6 +85,7 @@ export function EquationPanel({ family, side, method, barrierDirection, barrierS
   return (
     <div className="equation-content">
       <h2>{methodName}</h2>
+      <p><a href={`/#${reference}`}>Method reference</a> · <a href="/disclaimer">Disclaimer</a></p>
       <section>
         <h3>Method equation</h3>
         {methodEquation}

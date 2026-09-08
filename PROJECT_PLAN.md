@@ -1,404 +1,128 @@
-# Ithaca PDE Solver — Project Plan
+# CapitalCanvas — Project Plan
 
-## 1. Product goal
+Status: the site-structure phase is implemented and locally verified; Vercel preview validation awaits explicit upload approval. The reference-based home, research content, and legal drafts are implemented. Hosted verification and final privacy/license review remain pending. ROADMAP.md owns unfinished tasks and milestone exit conditions; docs/DESIGN_SPEC_DRAFT.md owns appearance.
 
-Build an interactive web application for exploring option-pricing PDEs and comparing solution methods. A user selects an option and model, edits financial and numerical parameters, runs compatible solvers, and compares prices, error, uncertainty, and runtime through synchronized 2D and 3D visualizations.
+## Product scope
 
-This product is an educational and quantitative research tool. It is not a trading, execution, or investment-advice system.
+CapitalCanvas is the parent site for quantitative tools. Ithaca is the first available tool inside it. Build everything in this repository, in the existing apps/web frontend, services/solver-api backend, and single Vercel project. No separate site, repository, service, or deployment is needed.
 
-## 2. Product scope and first vertical slice
+Use CapitalCanvas as the site name and “Capital Canvas” as the reference image's wordmark. The home page follows the supplied image, then continues through research, About, and the legal footer. Keep two unnamed Coming soon cards without invented functionality or release dates.
 
-The initial public product must support four option families. Implementation remains incremental so each family is numerically trustworthy before the next one begins.
+Preserve Ithaca's calculations, charts, controls, uncertainty, diagnostics, cancellation, and numerical gates. European, American, continuous zero-rebate single-barrier, and discrete fixed-strike Asian calls and puts are implemented. Deployment details belong to docs/OPERATIONS.md; numerical evidence belongs to docs/BENCHMARKS.md.
 
-### Instruments
+## Routes and navigation
 
-- European vanilla call and put
-- American vanilla call and put
-- Asian call and put
-- Single-barrier call and put
+| Location | Purpose |
+| --- | --- |
+| / | Scrollable CapitalCanvas home |
+| /#home | Top section of home: hero and tool cards |
+| /#resources | Research section on home |
+| /#about | About section on home |
+| /tools/ithaca | Existing Ithaca workbench |
+| /privacy | Full privacy statement |
+| /terms | Terms of use |
+| /disclaimer | Financial and numerical limitations |
+| Unknown path | Not-found view with Home link |
 
-### Model
+Home, Resources, and About are three sections of the same page, in that order. Home navigation targets `/#home`, Resources targets `/#resources`, and About targets `/#about`. Clicking these links while on home scrolls the existing document to the section; it does not replace content or remount the page. Resources and About remain visible below the tool cards during ordinary scrolling. Do not create `/resources` or `/about` pages or tab panels.
 
-- Black–Scholes with constant risk-free rate, dividend yield, and volatility
-- Governing PDE:
+Use real anchor links. The wordmark also returns to `/#home`. Legal-page navigation loads home and scrolls to the requested section after it mounts. Ithaca has one back arrow immediately left of its title, linking to `/#home`; it has no parent-site menu. Resources, About, and legal links remain accessible on home. Use smooth scrolling unless reduced motion is requested; in that case jump directly. Keep target headings clear of any sticky header. The active navigation underline follows the visible section during manual scrolling; do not add history entries on every scroll. Explicit link navigation and browser Back/Forward must restore the expected section. Preserve direct hash loads, refresh, and accessible focus.
 
-  \[
-  \frac{\partial V}{\partial t}
-  + \frac{1}{2}\sigma^2 S^2\frac{\partial^2 V}{\partial S^2}
-  + (r-q)S\frac{\partial V}{\partial S}
-  - rV = 0
-  \]
+The old root URL intentionally becomes home; do not redirect it back to Ithaca. Keep the existing deployment origin until a custom domain is confirmed. Attaching a domain later must use this same project.
 
-- Display terminal payoff and numerical boundary conditions beside the PDE.
+## Home content, in order
 
-### Required solution families
+1. Header: Capital Canvas wordmark; Home, Resources, About navigation.
+2. Hero: “Quantitative tools for clearer decisions.” Supporting line: “Purpose-built models. Transparent assumptions. Visual results.”
+3. Tool grid: Ithaca with spectral surface preview, “Explore option prices across spot and time.”, PDE / Monte Carlo / 3D Surface tags, and Launch Ithaca. Two non-interactive Coming soon cards. Tags highlight features rather than list every solver.
+4. Research and methods: accessible citations, original summaries, assumptions, and implementation notes for current methods. Future tools extend the same collection.
+5. About: CapitalCanvas mission, intended audience, transparent assumptions, and verified operator/contact details. Omit the first-tool paragraph and Explore Ithaca link; the Ithaca card owns the launch action.
+6. Footer: educational-use summary, Privacy, Terms, Disclaimer, contact, and copyright attribution. Full policies remain same-site routes rather than a wall of text on home.
 
-- European: Black–Scholes closed form, Crank–Nicolson finite differences, and risk-neutral Monte Carlo
-- American: binomial tree, finite differences with an early-exercise constraint, and Longstaff–Schwartz Monte Carlo
-- Barrier: supported analytical formulas, barrier-aware finite differences, and Monte Carlo with Brownian-bridge correction
-- Asian: geometric-average analytical benchmark where applicable, augmented-state numerical method, and Monte Carlo
+Do not invent biographies, credentials, affiliations, user counts, or performance claims.
 
-### First vertical slice
+## Research content
 
-Build European call/put first because all three methods solve the same problem and can be checked against a known reference. American, barrier, and Asian options remain required release scope, delivered as successive verified slices rather than one unvalidated batch.
+Keep resources in versioned frontend data, not a CMS. Each entry has a stable ID, title, authors, year, primary-source URL, method category, associated tool IDs, original summary, and implementation note. Display all initial method groups on home; longer notes may use accessible disclosures. Search, filters, and a separate resource directory are unnecessary initially.
 
-## 3. Primary user workflow
+Distinguish foundational research from the exact implementation. Label publisher/paywalled links accurately. Link papers; do not redistribute them without permission. Link relevant Ithaca method explanations back to stable resource anchors.
 
-1. Select option type and model.
-2. Enter contract and market parameters.
-3. Choose one or more compatible solution methods.
-4. Configure method-specific numerical settings.
-5. Run the calculation.
-6. Inspect scalar price, Greeks, runtime, convergence, and error.
-7. Compare synchronized price surfaces and strike/spot slices.
-8. Change one parameter and rerun without losing the prior result until the new result succeeds.
+### Verified initial references
 
-## 4. Interface structure
+| Reference | Implementation relationship |
+| --- | --- |
+| Black and Scholes (1973), [The Pricing of Options and Corporate Liabilities](https://doi.org/10.1086/260062) | European model foundation. Explain constant parameters and distinguish the implementation's continuous dividend yield. |
+| Cox, Ross, and Rubinstein (1979), [Option pricing: A simplified approach](https://www.sciencedirect.com/science/article/pii/0304405X79900151) | American binomial pricing and the underlying tree used by Asian augmented-state pricing. |
+| Longstaff and Schwartz (2001), [Valuing American Options by Simulation: A Simple Least-Squares Approach](https://escholarship.org/uc/item/43n1k4jb) | Regression estimates American continuation values. Explain regression error and reduced surface budgets. |
+| Kemna and Vorst (1990), [A pricing method for options based on average asset values](https://www.sciencedirect.com/science/article/pii/0378426690900395) | Foundation for Asian geometric control variates. Explain our discrete monitoring and exact discrete geometric benchmark separately. |
 
-Use a dense but calm scientific-workbench layout rather than a marketing page.
+### Citation work still required
 
-### App shell
+- Crank and Nicolson (1947), A practical method for numerical evaluation of solutions of partial differential equations of the heat-conduction type: verify original publisher link; explain grid, boundary, and truncation error.
+- Boyle (1977), Options: A Monte Carlo approach: verify publisher link; explain sampling uncertainty, confidence intervals, antithetic pairs, and common random numbers.
+- American LCP/PSOR: verify a reference for the exercise constraint and projected iteration. Do not attribute that entire algorithm to the Crank–Nicolson paper.
+- Reiner–Rubinstein barrier formulas: verify original citation/link for Breaking down the barriers; explain continuous monitoring, no rebate, and in/out parity.
+- Brownian-bridge survival weighting: verify a source for the actual conditional survival formula in barrier.py. Do not substitute a discrete-monitoring continuity correction or a different one-step-survival algorithm.
+- Asian augmented-state interpolation: cite CRR plus a verified running-average interpolation source, or explicitly identify interpolation as a project implementation detail. This is a tree-based method, not an Asian Crank–Nicolson PDE solver, despite the API's finite_difference grouping.
+- Curate public benchmark explanations from docs/BENCHMARKS.md. RQMC is a test reference, not an available production solver.
 
-- Header: product name, example presets, documentation/about access
-- Left control rail: instrument, model, market, contract, and solver settings
-- Main visualization canvas: tabbed 3D surface and 2D charts
-- Right inspector: governing PDE, terminal/boundary conditions, method explanation, warnings
-- Bottom result strip: price, standard error, confidence interval, reference error, runtime
+Use correct names: Black–Scholes, Cox–Ross–Rubinstein, Crank–Nicolson, and Longstaff–Schwartz.
 
-On small screens, controls and inspector become drawers. Charts remain the primary surface.
+## Privacy, terms, and legal scope
 
-### Required visual states
+These are content requirements and applicability checks, not a claim that a footer satisfies every jurisdiction. Final copy depends on operator location, audience, business model, and actual data practices.
 
-- Initial state with a valid preset
-- Computing state with progress/cancellation for Monte Carlo
-- Successful comparison state
-- Invalid parameter state with field-level errors
-- Solver failure state that preserves the last successful result
-- Mobile layout
+Inspection identified no accounts, saved results/configurations, analytics integration, or browser-storage usage in the frontend. Inputs are transmitted to FastAPI. API middleware records request metadata; hosting infrastructure may retain access/security logs. Never publish “we collect no data” or “nothing leaves your browser.” Verify provider settings, retention, recipients, transfers, cookies, and exception logging before writing final policy text.
 
-Before implementation, generate and approve a complete visual concept for desktop and mobile. Extract design tokens and component rules from the approved concept before coding.
+- Privacy: operator/contact, categories of data, computation purpose, hosting/logging, retention, recipients, applicable rights and request process, transfers, cookies/storage, external research links, and effective date.
+- Terms: educational/research purpose, acceptable use and compute abuse, availability, intellectual property/third-party notices, contact, and jurisdiction-appropriate liability and governing-law clauses.
+- Disclaimer: no investment advice or recommendation; no execution; theoretical values are not executable market quotes; model assumptions and discretization, truncation, regression, and statistical errors; no guaranteed accuracy or returns.
+- Footer summary: “For education and research. Model outputs are estimates, not investment advice.” Link the full disclaimer from Ithaca too.
 
-## 5. Parameter model
+Before launch, assess applicable national/state privacy and consumer rules, GDPR territorial scope if relevant, required operator disclosures, accessibility obligations, and license/attribution requirements. Add cookie consent only if actual technology and applicable law require it. Do not invent certifications or blanket compliance claims.
 
-### Shared contract and market inputs
+Official starting points checked for this plan: [FTC privacy and security guidance](https://www.ftc.gov/business-guidance/privacy-security) emphasizes clear data practices; [European Commission GDPR applicability](https://commission.europa.eu/law/law-topic/data-protection/information-business-and-organisations/application-gdpr_en) informs jurisdiction assessment. These do not establish an exhaustive legal checklist for an unknown operator.
 
-- Spot price `S0`
-- Strike `K`
-- Time to maturity `T`, in years
-- Volatility `sigma`
-- Risk-free rate `r`
-- Continuous dividend yield `q`
-- Option side: call or put
+## Architecture and implementation
 
-### Surface domain
+Reuse React/TypeScript/Vite, Plotly, KaTeX, local validation/request modules, and Python/FastAPI. The restructure does not require new form, request-state, persistence, or numerical frameworks.
 
-- Minimum and maximum spot
-- Spot grid count
-- Time grid count
-- Selected time or spot slice
+- Implemented: apps/web/src/App.tsx selects the page from the URL; IthacaWorkbench.tsx preserves the existing tool. Native links perform cross-page navigation, while hash links scroll the mounted home document. Browser history supplies Back/Forward without a routing dependency.
+- Keep home/legal pages, shared navigation/footer, and resource/tool data in apps/web/src.
+- Implemented: Ithaca is lazy-loaded by route, including Plotly and equation dependencies. Browser checks confirm home does not mount the workbench, run its initial automatic solve, or request /v1.
+- Implemented: workbench.css is scoped beneath .ithaca-workbench and loaded with the tool. Home/legal pages use natural document scrolling; tool rails and mobile sheets retain existing behavior.
+- Use a static local image or SVG for the surface card. Do not load Plotly or compute a price for decorative preview art.
+- Preserve /health and /v1/* precedence before frontend fallback. Verify deep-route refresh on a Vercel Services preview; current catch-all service routing alone does not prove SPA fallback.
+- Add route titles/descriptions, brand assets, and canonical/sitemap/robots behavior using the confirmed origin. Do not invent a domain.
+- Keep same-origin APIs, stateless behavior, compute caps, request cancellation, and existing numerical contracts. Internal package/module names do not need branding renames.
 
-### Finite-difference settings
+## Acceptance criteria
 
-- Spot steps
-- Time steps
-- Domain maximum
-- Scheme fixed to Crank–Nicolson for MVP
-- Stability/quality diagnostics
+- Home matches the image's hierarchy and scrolls through tools, research, About, and footer.
+- Launch Ithaca opens /tools/ithaca on the same origin. Refresh, direct load, history, anchors, and unknown paths work.
+- Home/legal pages load no Plotly and trigger no solve requests; they work when the API is unavailable.
+- All four option families preserve controls, compatible methods, charts, uncertainty, diagnostics, cancellation, and error recovery. Existing numerical benchmarks pass unchanged.
+- References resolve, citation metadata is checked, access labels are accurate, and implemented methods have coverage without false equivalence.
+- Keyboard navigation, visible focus, skip links, headings, contrast, route focus, reduced motion, and 200% zoom work at 390, 768, 1280, and 1440 px without horizontal page scrolling.
+- Legal links resolve and privacy text matches deployed behavior. Missing operator/jurisdiction facts are not fabricated.
+- Existing web test/lint/build, API suite, preview pricing smoke, and route/browser checks pass before production promotion.
 
-### Monte Carlo settings
+## Deferred scope and owner inputs
 
-- Number of paths
-- Time steps per path
-- Random seed
-- Antithetic variates toggle
-- Confidence level
-- Surface resolution budget
-
-Use safe defaults and explicit upper bounds. Estimate work before submission and warn when a configuration is expensive.
-
-## 6. Visualization specification
-
-### 3D price surface
-
-- Axes: spot `S`, time-to-maturity `tau`, option value `V`
-- Choose closed form, finite difference, or Monte Carlo as the active surface
-- Overlay another method as a wireframe or difference surface
-- Shared color scale and camera state when switching methods
-- Hover shows coordinates, price, and method
-
-### 2D views
-
-- Price versus spot at selected time
-- Price versus time at selected spot
-- Method error versus spot relative to closed form
-- Monte Carlo convergence versus path count with confidence band
-- Terminal payoff and current price curve
-- Draggable 2D price slice through the active 3D surface
+Additional tools, live data, accounts, saved/shareable results, databases, portfolios, execution, calibration, implied-volatility smiles, and additional stochastic models remain deferred. No newsletter, contact form, analytics, CMS, or monetization is implied.
 
-### Price-slice convention
+These exclusions are scope boundaries, not a future delivery commitment. Home design and research/legal drafts are implemented locally. Hosted verification and final release review remain. See ROADMAP.md for tasks and exit conditions.
 
-The requested “smile” is a 2D price slice through the 3D price surface, not implied volatility versus strike. Label it **Price slice** in the interface to avoid standard quant-finance ambiguity. Implied-volatility surfaces and smiles are deferred.
+Owner location confirmed: Chicago, Illinois, United States. The owner confirms a personal, noncommercial project and public contact dymteam23@gmail.com. The owner authorizes displaying Emmanuel Zhang above the About contact email. Audience targeting and deployed provider practices require release review. Domain selection is optional and does not block implementation on the current deployment.
 
-### Monte Carlo surface behavior
-
-Monte Carlo results should be visible alongside deterministic surfaces, but uncertainty must remain explicit. Show confidence intervals on 2D slices and offer an error/difference surface. Use common random numbers across surface nodes to reduce visual noise. Enforce a computation budget so a surface request cannot accidentally multiply paths by an unbounded grid.
-
-## 7. Solver compatibility matrix
-
-| Instrument/model | Closed form | Finite difference | Monte Carlo | Later methods |
-| --- | --- | --- | --- | --- |
-| European vanilla / Black–Scholes | Yes | Crank–Nicolson | Risk-neutral paths | Binomial tree |
-| American vanilla / Black–Scholes | No general formula | LCP/PSOR | Longstaff–Schwartz | Binomial tree |
-| Single barrier / Black–Scholes | Supported continuous-monitoring variants | Barrier boundary | Brownian-bridge-corrected paths | Rebate variants later |
-| Asian / Black–Scholes dynamics | Geometric variants only | Augmented state dimension | Natural fit | Arithmetic approximations |
+### Contact and legal requirements: Chicago clarification
 
-All four rows belong to required release scope. Matrix drives which controls and methods appear; UI must not offer invalid combinations or imply that every method applies to every contract.
+Do not treat a public contact or home address as a universal legal launch requirement. A monitored project email is recommended for privacy questions and issue reports; the owner has selected dymteam23@gmail.com. Do not publish a personal address, phone number, or inferred identity.
 
-## 8. Technical architecture
+The [Illinois Personal Information Protection Act](https://www.ilga.gov/Legislation/ILCS/Articles?ActID=2702&ChapterID=67) addresses covered personal information, security, disposal, and breach notification. It does not establish a blanket public contact-page requirement for every website. Applicable duties depend on the statutory data definitions and actual practices.
 
-### Frontend
+Other conditional rules can matter beyond operator location. [California's CalOPPA guidance](https://oag.ca.gov/sites/all/files/agweb/pdfs/cybersecurity/making_your_privacy_practices_public.pdf) describes privacy-policy duties for commercial sites collecting personally identifiable information about Californians. If GDPR applies, privacy notices require controller identity/contact information. If COPPA applies to children's data collection, the [FTC guidance](https://www.ftc.gov/business-guidance/resources/complying-coppa-frequently-asked-questions) specifies operator name, address, telephone, and email disclosures. Do not assume these regimes apply solely because the site is publicly accessible.
 
-- React + TypeScript + Vite
-- Plotly.js for synchronized 2D/3D scientific charts
-- React Hook Form plus Zod for parameter validation
-- TanStack Query for solver requests and request state
-- KaTeX for governing equations and boundary conditions
-- Accessible shared form and chart-control components
-
-### Numerical backend
+Privacy is planned to explain actual processing and meet any applicable notice duties. Terms and a financial disclaimer are recommended product protections, not automatically mandated standalone pages for every Chicago educational site. A contact choice is an editorial open item unless an applicable rule establishes it as legally necessary. Final legal review, not a generic checklist, determines mandatory disclosures.
 
-- Python 3.12
-- FastAPI with Pydantic request/response models
-- NumPy for vectorized Monte Carlo and arrays
-- SciPy sparse linear algebra for finite differences
-- Deterministic solver modules independent from HTTP handlers
-
-### Runtime shape
-
-```text
-React workbench
-    |
-    | validated solver request
-    v
-FastAPI calculation endpoint
-    |
-    +-- closed-form solver
-    +-- finite-difference solver
-    +-- Monte Carlo solver
-    |
-    v
-typed result + diagnostics + chart-ready grids
-```
-
-Use synchronous HTTP for bounded MVP calculations. Add background jobs only after measured requests exceed acceptable latency or cancellation cannot work reliably.
-
-### Deployment and persistence
-
-- Deploy the web application to Vercel.
-- Host numerical computation in a Python/FastAPI Vercel Service beside the Vite frontend, with same-origin routing.
-- Save no user configurations, results, uploaded data, or accounts.
-- Keep the application stateless between page loads.
-- Keep default calculations under 5 seconds. Allow explicitly gated advanced calculations up to 30 seconds.
-
-### Suggested repository structure
-
-```text
-apps/
-  web/
-    src/
-      components/
-      features/solver-workbench/
-      lib/api/
-      lib/charts/
-services/
-  solver-api/
-    app/
-      api/
-      domain/
-      solvers/
-      validation/
-    tests/
-packages/
-  contracts/
-docs/
-```
-
-Do not create this structure until implementation begins and tooling choices are confirmed.
-
-## 9. API outline
-
-### `GET /v1/capabilities`
-
-Returns supported instruments, models, methods, parameter definitions, limits, and compatibility. This keeps the UI from duplicating solver rules.
-
-### `POST /v1/solve`
-
-Accepts one validated problem and selected methods. Returns:
-
-- Normalized input parameters
-- Scalar price per method
-- Surface grid per method
-- Requested 2D slices
-- Monte Carlo standard error and confidence interval
-- Error metrics versus reference when available
-- Runtime and numerical diagnostics
-- Warnings
-
-### `GET /health`
-
-Basic deployment health check.
-
-No database is required for MVP. Presets live in versioned source data. Browser URL state can make configurations shareable later without accounts.
-
-## 10. Numerical correctness requirements
-
-- Unit-test closed-form results against published benchmark values.
-- Verify put-call parity.
-- Verify terminal and boundary conditions.
-- Verify monotonicity: call value increases with spot; put value decreases with spot.
-- Verify non-negativity and basic no-arbitrage bounds.
-- Compare finite-difference values with closed form over a parameter grid.
-- Verify finite-difference error decreases as the grid refines.
-- Verify seeded Monte Carlo runs are reproducible.
-- Verify Monte Carlo confidence intervals cover reference values at the expected statistical rate over repeated tests.
-- Report discretization, truncation, and statistical error separately.
-- Never present Monte Carlo samples as deterministic precision.
-
-## 11. Performance and safety budgets
-
-Initial targets; confirm through benchmarks:
-
-- Closed-form scalar response: under 100 ms server time
-- Closed-form surface: under 300 ms
-- Finite-difference surface: under 1 s at default grid
-- Monte Carlo scalar: under 2 s at default path count
-- Monte Carlo surface: under 5 s at default budget
-- Interactive chart updates after response: under 100 ms for local slicing
-
-Compute layer validates maximum paths, steps, grid cells, and total estimated operations. Requests receive timeouts and cancellation support. Numerical warnings are part of successful responses when results are usable but low quality.
-
-## 12. Delivery phases
-
-### Phase 0 — Decisions and benchmarks
-
-- Resolve contract variants, compute placement, numerical scale, and high-dimensional surface slicing.
-- Select 5–10 trusted benchmark cases.
-- Approve desktop and mobile visual concepts.
-- Record API and numerical conventions: time variable, rate units, confidence intervals, grid orientation.
-
-Exit: benchmark table and numerical conventions committed.
-
-### Phase 1 — Vertical slice
-
-- European call/put under Black–Scholes
-- Shared form validation
-- Closed-form scalar and surface
-- Governing PDE, payoff, and boundary-condition display
-- One 3D surface and one synchronized 2D slice
-- Automated benchmark and put-call-parity tests
-
-Exit: user can change valid parameters and receive a correct, visual closed-form result.
-
-### Phase 2 — Numerical comparison
-
-- Crank–Nicolson finite-difference solver
-- Risk-neutral Monte Carlo with seed, paths, steps, antithetic variates, and confidence level
-- Difference charts, confidence bands, convergence view, runtime metrics
-- Work estimation, limits, progress, and cancellation
-
-Exit: all three methods agree within documented tolerances for benchmark cases.
-
-### Phase 3 — American options
-
-- American call/put
-- Binomial reference, constrained finite differences, and Longstaff–Schwartz Monte Carlo
-- Early-exercise boundary visualization
-- American benchmark tests
-
-Exit: American methods agree within documented tolerances and exercise behavior passes known cases.
-
-### Phase 4 — Barrier options
-
-- Confirmed single-barrier variants
-- Barrier-aware analytical, finite-difference, and corrected Monte Carlo methods
-- Barrier level and activation state in charts
-- Barrier benchmark tests
-
-Exit: supported barrier contracts satisfy boundary behavior and analytical benchmarks.
-
-### Phase 5 — Asian options
-
-- Confirmed averaging convention and monitoring schedule
-- Geometric analytical benchmark where applicable
-- Augmented-state numerical method
-- Arithmetic/geometric Monte Carlo
-- Fixed-state slices for higher-dimensional results
-
-Exit: Asian results pass geometric benchmarks and documented Monte Carlo convergence tests.
-
-### Phase 6 — Product hardening
-
-- Responsive and keyboard-accessible workbench
-- Error recovery and preserved last result
-- Performance benchmarks
-- Security review, Vercel deployment, observability, and documentation
-
-Exit: production deployment meets correctness, accessibility, and performance gates.
-
-## 13. Initial public release acceptance criteria
-
-- User can select supported European, American, Asian, or barrier call/put contracts and edit their relevant parameters.
-- Invalid input cannot reach a solver and produces a useful field-level message.
-- UI shows each contract's governing PDE or augmented equation, payoff, state definitions, and active boundary conditions.
-- UI offers only solution methods valid for the selected contract.
-- 3D surface and 2D slices remain synchronized.
-- Monte Carlo settings change the computation and displayed uncertainty.
-- Results show method, runtime, diagnostics, and comparable error metrics.
-- Each option family meets documented benchmark and convergence tolerances.
-- Desktop and mobile core workflows work with keyboard navigation.
-- Last successful result remains visible when a later request fails.
-- Refreshing the page restores no prior configuration or result.
-
-## 14. Explicit non-goals for initial public release
-
-- Live market data
-- Portfolio pricing
-- Authentication or saved user accounts
-- Saved or shareable configurations and results
-- Trade execution or brokerage integration
-- Calibration to an option chain
-- GPU or distributed computing
-- Arbitrary user-authored PDEs
-- Basket or multi-asset options
-- Heston, SABR, local volatility, or jump diffusion
-- Implied-volatility surfaces and smiles
-- Production risk metrics such as VaR
-
-## 15. Main risks
-
-- **Scope explosion:** option families require materially different state spaces and solvers. Enforce compatibility matrix and phase gates.
-- **Terminology ambiguity:** call the requested chart a price slice, not a smile. Reserve smile for implied volatility versus strike.
-- **Dimensionality:** Asian pricing adds an average state variable. A single 3D chart cannot display price over spot, time, and average simultaneously; require a fixed-state slice.
-- **Monte Carlo cost:** surface calculation multiplies work. Use budgets, common random numbers, vectorization, and reduced grids.
-- **False precision:** always show uncertainty and solver diagnostics.
-- **Frontend/backend rule drift:** make backend capabilities and validation canonical.
-- **Chart overload:** prioritize one active surface and synchronized slices rather than showing every chart simultaneously.
-
-## 16. Confirmed decisions
-
-- Audience: anyone who wants to explore option prices visually; interface should teach without blocking experienced users.
-- Required option families: European, American, Asian, and barrier.
-- “Smile”: a 2D price slice through the 3D price surface. Implied volatility is later work.
-- Deployment: Vercel website.
-- Persistence: none. No accounts, saved configurations, saved results, or database.
-
-## 17. Locked implementation decisions
-
-- Asian: fixed-strike arithmetic average with discrete monitoring. Add a geometric-average analytical benchmark.
-- Barrier: support single up/down and in/out contracts with continuous monitoring and no rebate initially.
-- Compute: Vercel Services with a Vite frontend and Python/FastAPI numerical service. Browser remains visualization-focused.
-- Higher-dimensional charts: show spot × time × price while an average-state slider fixes the additional Asian state.
-- Monte Carlo: include an optional sample-path chart plus price surface, confidence bands, and convergence.
-- Compute budget: default runs under 5 seconds; explicitly gated advanced runs may take up to 30 seconds.
-
-Planning decisions, benchmark conventions, and visual concepts are approved. Phases 1 through 5 and Phase 6 local hardening are implemented; `ROADMAP.md` tracks the two remaining production deployments.
+Resources are organized in a collapsible Ithaca project group. Per-paper details are labeled “Implementation”; repeated “Used in Ithaca” labels are removed. Direct paper anchors open their containing project group.

@@ -15,7 +15,7 @@ def fetch(url: str, *, payload: dict[str, object] | None = None) -> tuple[int, b
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Smoke-test a deployed Ithaca frontend and solver API.")
+    parser = argparse.ArgumentParser(description="Smoke-test CapitalCanvas routes and the Ithaca solver API.")
     parser.add_argument("--frontend", required=True)
     parser.add_argument("--api", required=True)
     args = parser.parse_args()
@@ -23,7 +23,12 @@ def main() -> int:
     api = args.api.rstrip("/")
     try:
         status, html = fetch(frontend)
-        assert status == 200 and b"Ithaca" in html, "frontend did not return the Ithaca shell"
+        assert status == 200 and b"CapitalCanvas" in html and b'id="root"' in html, "frontend did not return the CapitalCanvas shell"
+        # These HTTP checks prove frontend fallback. Browser QA separately checks
+        # that React renders the correct content for each path and hash target.
+        for path in ("/tools/ithaca", "/privacy", "/terms", "/disclaimer", "/not-a-page"):
+            route_status, route_html = fetch(f"{frontend}{path}")
+            assert route_status == 200 and b"CapitalCanvas" in route_html and b'id="root"' in route_html, f"frontend fallback failed for {path}"
         status, health_raw = fetch(f"{api}/health")
         health = json.loads(health_raw)
         assert status == 200 and health["status"] == "ok", "health check failed"

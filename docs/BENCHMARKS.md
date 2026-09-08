@@ -1,6 +1,6 @@
 # Numerical Benchmark Specification
 
-Status: European Phase 2, American Phase 3, barrier Phase 4, and Asian Phase 5 gates are locked and passing.
+Scope: regression reference for the existing Ithaca solvers during the CapitalCanvas restructure. European, American, barrier, and Asian gates are locked; the previous implementation recorded them as passing. Rerun the suite after workbench extraction. Values and tolerances below remain unchanged.
 
 ## Conventions
 
@@ -12,7 +12,7 @@ Status: European Phase 2, American Phase 3, barrier Phase 4, and Asian Phase 5 g
 - UI rounding never changes comparison or acceptance calculations.
 - Seeded stochastic tests must be reproducible.
 
-## Phase 2 numerical conventions
+## European numerical conventions
 
 - Crank–Nicolson uses a uniform finite spot domain with analytical Dirichlet boundaries.
 - Central spatial differences are used except at convection-dominated nodes, where local upwind stabilization preserves monotonicity and non-negativity.
@@ -80,7 +80,7 @@ Independent references:
 
 The published value is rounded to four decimals. The independent tree differs by `0.0000256414`. `services/solver-api/tests/test_american_benchmarks.py` owns the test oracle and must not be imported by production solvers.
 
-Phase 3 production conventions:
+American production conventions:
 
 - Production binomial reference: 800-step Cox–Ross–Rubinstein tree. Surface slices use at most 100 steps to remain interactive.
 - American finite difference: uniform 241-node spot grid, 240 time steps, `S_max = 120` for `AM-PUT-BASE`, Crank–Nicolson LCP solved by PSOR with `omega = 1.2` and residual-change tolerance `1e-8`.
@@ -95,7 +95,7 @@ Acceptance:
 - American put price is no less than European put price.
 - Exercise boundary is monotone under the baseline assumptions.
 
-Locked Phase 3 results:
+Locked American results:
 
 - 800-step production binomial: `2.3192041545`; absolute reference error `0.0003958455`.
 - Default LCP/PSOR with `S_max = 120`: `2.3177472324`; absolute reference error `0.0018527676`.
@@ -124,12 +124,12 @@ Independent references:
 1. QuantLib 1.40 `AnalyticBarrierEngine`, evaluated with flat continuously compounded curves, `Actual365Fixed`, and a one-year European exercise. The engine documents Haug's barrier formulas and tests against published literature: <https://github.com/lballabio/QuantLib/blob/master/ql/pricingengines/barrier/analyticbarrierengine.hpp>.
 2. Test-only numerical quadrature of the drifted-log-Brownian transition density killed at the absorbing barrier. This reflection-principle implementation is independent of the production Reiner–Rubinstein decomposition and reproduces both locked values within `1e-10`.
 
-Phase 4 production conventions:
+Barrier production conventions:
 
 - Analytical pricing uses the Reiner–Rubinstein `A`–`D` decomposition for knock-outs and analytical vanilla parity for knock-ins.
 - Finite differences use Crank–Nicolson on a domain whose barrier is an exact absorbing endpoint. Knock-ins are recovered from numerical vanilla minus knock-out values.
 - Monte Carlo simulates exact GBM endpoints and weights each interval by its conditional Brownian-bridge survival probability. Scalar estimates use the full path budget; surfaces use common antithetic random numbers, at most 512 paths per spot, and at most 24 time steps.
-- A barrier touched at request time immediately deactivates a knock-out or activates a knock-in. Continuous monitoring and zero rebate are fixed Phase 4 conventions.
+- A barrier touched at request time immediately deactivates a knock-out or activates a knock-in. Continuous monitoring and zero rebate are fixed contract conventions.
 
 Acceptance:
 
@@ -139,7 +139,7 @@ Acceptance:
 - Brownian-bridge Monte Carlo reduces discrete-monitoring bias relative to naive path sampling.
 - Moving a knock-out barrier farther from spot cannot reduce contract value under otherwise fixed inputs.
 
-Locked Phase 4 results:
+Locked barrier results:
 
 - Default down-and-out call finite difference: within `0.01` of `8.665471658245675`.
 - Default up-and-out call finite difference: within `0.01` of `1.1760653996503727`.
@@ -176,7 +176,7 @@ Reference metadata: 16 independent Owen-scrambled SciPy Sobol replicates, `2^19`
 
 Independent check: NumPy MT19937 pseudo-random simulation with four million paths and the same analytical geometric control variate produced call `6.15595565` with standard error `0.00011887`, and put `3.53436485` with standard error `0.00007059`. Seeds were `314159` and `271828` respectively. Both intervals agree with the locked RQMC references.
 
-Phase 5 production conventions:
+Asian production conventions:
 
 - Fixed-strike averaging uses equally spaced future observations. Spot at `t=0` is excluded.
 - Geometric analytical pricing uses the exact discrete lognormal distribution.
@@ -203,12 +203,12 @@ Acceptance:
 - Surface nodes use common random numbers where comparisons benefit from correlated noise.
 - Sample-path charts never imply that displayed paths equal the full pricing sample.
 
-## Benchmark completion gate
+## Benchmark maintenance
 
-Before implementing an option-family solver:
+The site restructure must preserve these references and run the existing suites. If a later authorized change modifies a solver:
 
 1. Lock expected scalar values and source metadata.
 2. Implement the reference check independently from the production solver.
 3. Record tolerances before viewing production results.
 4. Add invariants and boundary cases, not only happy-path scalar values.
-5. Make the family benchmark suite pass before adding the next family.
+5. Pass the affected family suite and cross-family regressions before releasing the change.

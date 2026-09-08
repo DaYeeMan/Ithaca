@@ -1,24 +1,27 @@
 # Production operations
 
+CapitalCanvas transition: frontend routes `/`, `/tools/ithaca`, `/privacy`, `/terms`, and `/disclaimer` are implemented locally in the existing web service. Verify direct loads, refresh, unknown paths, and home anchors on Vercel preview before promotion. `/health` and `/v1/*` must retain API precedence. No custom-domain change is assumed. The route migration has not been deployed: automatic approval review requires explicit user approval for source upload to the existing `ithaca` project.
+
+Local verification: the production build served through Vite preview passed the updated HTTP smoke script, including frontend fallback, API health/capabilities, and the European benchmark at `10.4505835722`. Edge browser checks passed actual route rendering and all four option-family solve flows. This does not prove Vercel Services fallback; that gate remains open.
+
 Ithaca deploys as one stateless Vercel Services project. The Vite service owns `/`; the FastAPI service owns `/health` and `/v1/*`. Browser-to-API traffic stays on the deployment origin, so production needs neither an API URL variable nor CORS configuration. No database or background worker is required.
 
 Current production: `https://ithaca-lake.vercel.app`. The initial Hobby deployment was verified on September 7, 2026 with `/health`, `/v1/diagnostics`, the automated pricing smoke test, and a live browser solve.
 
 ## Release order
 
-1. Import the repository into Vercel with the repository root selected. If Vercel asks for a framework preset, select **Services**; `vercel.json` owns each service's build settings.
-2. Do not add `VITE_SOLVER_API_URL`. The web service uses same-origin `/v1` requests.
-3. Deploy a preview and confirm `GET /health` and `GET /v1/diagnostics` on the preview origin.
-4. Run `python scripts/smoke_test.py --frontend https://preview.example --api https://preview.example`.
-5. Promote the verified preview to production.
+1. Use the already-linked Vercel project and repository-root `vercel.json`. Keep both services in this project.
+2. Run frontend checks and solver regressions. Preserve same-origin `/v1` requests without adding `VITE_SOLVER_API_URL`.
+3. Deploy a preview and confirm `GET /health` and `GET /v1/diagnostics` on that origin.
+4. Verify `/`, `/tools/ithaca`, `/privacy`, `/terms`, `/disclaimer`, unknown paths, direct refreshes, and browser history. Test all home anchors from home/legal pages and by direct load; test Ithaca's single back arrow to `/#home`. All three sections belong to the same home document. Check the complete home scroll and legal footer on mobile.
+5. Run `python scripts/smoke_test.py --frontend https://preview.example --api https://preview.example`, then verify an Ithaca solve in the browser. Confirm home loads no Plotly and makes no solver request.
+6. Promote the verified preview, repeat route/pricing checks on production, and record the release URL and results.
 
 ## Vercel CLI
 
 The same flow from the repository root is:
 
 ```powershell
-npx --yes vercel@59.11.7 login
-npx --yes vercel@59.11.7 link
 npx --yes vercel@59.11.7
 python scripts/smoke_test.py --frontend https://your-preview.vercel.app --api https://your-preview.vercel.app
 npx --yes vercel@59.11.7 promote https://your-preview.vercel.app
@@ -45,7 +48,7 @@ Promote the previous successful Vercel deployment, then run the smoke test again
 ## Local production check
 
 ```powershell
-\.\services\solver-api\.venv\Scripts\python.exe -m uvicorn app.main:app --app-dir services/solver-api --host 127.0.0.1 --port 8000
+.\services\solver-api\.venv\Scripts\python.exe -m uvicorn app.main:app --app-dir services/solver-api --host 127.0.0.1 --port 8000
 npm run dev:web -- --host 127.0.0.1
 python scripts/smoke_test.py --frontend http://127.0.0.1:5173 --api http://127.0.0.1:5173
 ```
@@ -53,3 +56,10 @@ python scripts/smoke_test.py --frontend http://127.0.0.1:5173 --api http://127.0
 The Vite development server proxies `/health` and `/v1` to port 8000. To exercise Vercel's combined routing instead, use `vercel dev -L` after the project is linked or the installed CLI supports local Services mode.
 
 Vercel CLI 59.11.7 can generate an invalid Python bootstrap on Windows when the repository's absolute path contains backslash escape sequences such as `C:\Users`. If that occurs, use the normal two-process check above or a cloud preview; Vercel's Linux deployment build is unaffected.
+
+
+## Current content status
+
+The reference-based home, research entries, and personal/noncommercial About copy are implemented locally. Contact: dymteam23@gmail.com. Emmanuel Zhang appears above the About email, as authorized by the owner. `/notices` supplements the three policy routes. Policy drafts remain subject to deployed hosting-practice verification; see ROADMAP.md for the remaining release gates.
+
+Resources are organized in a collapsible Ithaca project group. Per-paper details are labeled “Implementation”; repeated “Used in Ithaca” labels are removed. Direct paper anchors open their containing project group.
