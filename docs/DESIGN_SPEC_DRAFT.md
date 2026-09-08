@@ -85,3 +85,5 @@ Compare desktop home against the supplied image for hierarchy, spacing, typograp
 The reference-based home, research entries, and personal/noncommercial About copy are implemented locally. Contact: dymteam23@gmail.com. Emmanuel Zhang appears above the About email, as authorized by the owner. `/notices` supplements the three policy routes. Policy drafts remain subject to deployed hosting-practice verification; see ROADMAP.md for the remaining release gates.
 
 Resources are organized in a collapsible Ithaca project group. Per-paper details are labeled “Implementation”; repeated “Used in Ithaca” labels are removed. Direct paper anchors open their containing project group.
+
+The Ithaca sidebar uses an inline Method reference disclosure with shared Resources content and stable light-blue links. It has no Disclaimer link. On mobile, Black–Scholes closed form uses two lines and the heading reserves space for the close button.

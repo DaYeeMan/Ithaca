@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { SiteLayout } from "./SiteLayout";
 import type { HomeSection } from "./SiteNavigation";
+import { ResearchContent, AsianLatticeContent } from "./ResearchContent";
 import { research } from "./research";
 import { contactEmail, contactHref } from "./siteInfo";
 
@@ -85,20 +86,13 @@ export default function HomePage() {
         {research.map((entry, index) => <article id={entry.id} className="research-entry" key={entry.id} tabIndex={-1} aria-labelledby={`${entry.id}-title`}>
           <div className="research-category"><span className="section-index" aria-hidden="true">{String(index + 1).padStart(2, "0")}</span><span>{entry.method}</span></div>
           <div className="research-body">
-            <h3 id={`${entry.id}-title`}><a href={entry.source} rel="noreferrer">{entry.title}<span aria-hidden="true"> ↗</span></a></h3>
-            <p className="citation-meta">{entry.authors} · {entry.year}</p>
-            <p>{entry.summary}</p>
-            <div className="resource-meta"><span>{entry.access}</span></div>
-            <details><summary>Implementation</summary><p>{entry.implementation}</p></details>
+            <ResearchContent entry={entry} headingId={`${entry.id}-title`} />
           </div>
         </article>)}
         <article id="asian-lattice" className="research-entry" tabIndex={-1} aria-labelledby="asian-lattice-title">
           <div className="research-category"><span className="section-index" aria-hidden="true">10</span><span>Implementation note</span></div>
           <div className="research-body">
-            <h3 id="asian-lattice-title">Asian options: a running-average state</h3>
-            <p>Ithaca extends a CRR tree with a grid of running averages. At observation dates, it updates the average and interpolates continuation values between grid points. This is a project implementation choice, not a separate published solver.</p>
-            <p>The grid introduces interpolation error. When tree probabilities are invalid, the implementation falls back to a moment-matched approximation. This method is not an Asian Crank–Nicolson PDE solver.</p>
-            <a href="/#crr">Read the underlying CRR reference <span aria-hidden="true">↑</span></a>
+            <AsianLatticeContent headingId="asian-lattice-title" />
           </div>
         </article>
         </div>

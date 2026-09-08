@@ -126,3 +126,5 @@ Other conditional rules can matter beyond operator location. [California's CalOP
 Privacy is planned to explain actual processing and meet any applicable notice duties. Terms and a financial disclaimer are recommended product protections, not automatically mandated standalone pages for every Chicago educational site. A contact choice is an editorial open item unless an applicable rule establishes it as legally necessary. Final legal review, not a generic checklist, determines mandatory disclosures.
 
 Resources are organized in a collapsible Ithaca project group. Per-paper details are labeled “Implementation”; repeated “Used in Ithaca” labels are removed. Direct paper anchors open their containing project group.
+
+The Ithaca sidebar uses an inline Method reference disclosure with shared Resources content and stable light-blue links. It has no Disclaimer link. On mobile, Black–Scholes closed form uses two lines and the heading reserves space for the close button.

@@ -68,5 +68,13 @@ describe("workbench panels", () => {
     const panel = within(equation.container);
     expect(panel.getByRole("heading", { level: 2 })).toHaveTextContent("Cox–Ross–Rubinstein");
     expect(panel.queryByText("Black–Scholes PDE")).not.toBeInTheDocument();
+    expect(panel.queryByRole("link", { name: "Disclaimer" })).not.toBeInTheDocument();
+    expect(panel.queryByRole("link", { name: "Method reference" })).not.toBeInTheDocument();
+    const reference = panel.getByText("Method reference").closest("details");
+    expect(reference).not.toHaveAttribute("open");
+    fireEvent.click(panel.getByText("Method reference"));
+    expect(reference).toHaveAttribute("open");
+    expect(panel.getByRole("link", { name: /Option pricing: A simplified approach/ })).toBeVisible();
+    expect(panel.getByText("Implementation")).toBeVisible();
   });
 });

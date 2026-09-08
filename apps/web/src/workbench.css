@@ -137,6 +137,12 @@ h2 { margin: 0; font: 23px/1.2 var(--serif); font-weight: 400; }
 .chart-note { margin: 4px 0 0; color: var(--muted); font-size: 11px; }
 .app-message { position: absolute; left: 22px; right: 22px; bottom: 12px; padding: 9px 12px; border: 1px solid rgba(255, 176, 0, 0.6); background: rgba(46, 31, 3, 0.95); color: #ffd16b; font-size: 12px; z-index: 6; }
 
+.method-reference { margin-top: 16px; }
+.method-reference summary { cursor: pointer; padding-block: 8px; color: var(--cyan-soft); font-size: 14px; }
+.method-reference a, .method-reference a:visited, .method-reference a:hover, .method-reference a:active { color: var(--cyan-soft); text-underline-offset: 3px; }
+.method-reference-content { padding-block: 12px; }
+.method-reference-content p { margin-block: 12px; }
+.method-reference-content .resource-meta { color: var(--muted); font-size: 12px; margin-block: 12px; }
 .equation-content section { margin-top: 20px; padding-bottom: 18px; border-bottom: 1px solid var(--line-soft); }
 .equation-content section:last-child { border: 0; }
 .equation-content .katex-display { margin: 12px 0; overflow-x: hidden; overflow-y: hidden; text-align: left; font-size: 0.78rem; }
@@ -245,6 +251,8 @@ h2 { margin: 0; font: 23px/1.2 var(--serif); font-weight: 400; }
   .sheet-close { position: absolute; top: 28px; right: 18px; border: 0; background: transparent; padding: 8px; z-index: 3; }
   .mobile-sheet .problem-content, .mobile-sheet .equation-content { padding: 30px 20px 100px; }
   .mobile-sheet .equation-content .katex-display { overflow-x: auto; font-size: 0.86rem; }
+  .mobile-sheet .equation-content > h2 { padding-right: 44px; }
+  .mobile-sheet .method-title-break { display: block; }
   .mobile-sheet h2 { font-size: 28px; margin-bottom: 22px; }
   .mobile-sheet .select-field, .mobile-sheet .number-field { grid-template-columns: minmax(100px, 1fr) minmax(160px, 1.2fr); min-height: 54px; font-size: 15px; }
   .mobile-sheet .select-field select, .mobile-sheet .number-control { height: 44px; }
