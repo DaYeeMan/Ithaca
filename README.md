@@ -2,7 +2,7 @@
 
 Quantitative tools for clearer decisions. This repository contains the CapitalCanvas site and its first tool, Ithaca, an interactive option-pricing workbench.
 
-The CapitalCanvas home and Ithaca route are implemented locally in this repository. Home follows the supplied dark three-card reference, with research and About below it. Privacy, Terms, Disclaimer, and Attributions have review drafts. Production still serves the previous release; Vercel preview source upload awaits explicit approval. See ROADMAP.md for release gates.
+CapitalCanvas is live at https://capitalcanvas.vercel.app. Home follows the supplied dark three-card reference, with research and About below it. The latest local changes finalize policy labels and license notices and simplify the footer/About content. Deploy these changes through the existing workflow. See ROADMAP.md for the staged firewall follow-up.
 
 Home, Resources, and About navigation scrolls to `/#home`, `/#resources`, and `/#about` on that single page. Resources sits below the hero/tool cards; About sits below Resources.
 
@@ -49,9 +49,6 @@ npm run build:web
 - [docs/PERFORMANCE.md](./docs/PERFORMANCE.md): performance gates and resource controls
 - [docs/OPERATIONS.md](./docs/OPERATIONS.md): deployment, monitoring, smoke tests, and rollback
 
-## Next implementation
+## Remaining work
 
-1. Complete the pending Vercel preview check for the locally verified route shell and isolated workbench.
-2. Bring the scrollable home to reference fidelity: hero/tools, spectral preview, research, About, and footer.
-3. Complete verified method references and factual same-site legal pages.
-4. Verify navigation, accessibility, performance, and preserved pricing behavior; release through the existing Vercel project.
+Deploy the latest content changes and publish/review the staged solve-protection rule before enabling enforcement. ROADMAP.md contains the exact remaining actions; completed site restructuring is no longer an implementation backlog.

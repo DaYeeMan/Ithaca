@@ -40,10 +40,10 @@ describe("CapitalCanvas route boundaries", () => {
     expect(screen.getByRole("link", { name: /Launch Ithaca/ })).toHaveAttribute("href", "/tools/ithaca");
   });
 
-  it.each(["/privacy", "/terms", "/disclaimer", "/notices"])("renders %s as a draft with shared home anchors", (path) => {
+  it.each(["/privacy", "/terms", "/disclaimer", "/notices"])("renders %s with a publication date and shared home anchors", (path) => {
     window.history.replaceState(null, "", path);
     render(<App />);
-    expect(screen.getByText("Draft for review · September 8, 2026")).toBeInTheDocument();
+    expect(screen.getByText("Updated September 8, 2026")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Resources" })).toHaveAttribute("href", "/#resources");
     expect(fetch).not.toHaveBeenCalled();
   });

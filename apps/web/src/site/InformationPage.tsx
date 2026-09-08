@@ -9,7 +9,7 @@ const pages: Record<string, { title: string; sections: [string, string][] }> = {
     ["Calculations", "Ithaca sends your model parameters to its solver service to calculate results. The application has no accounts, database of saved calculations, or persistent browser storage for inputs and results. Calculations are processed in memory. Do not enter personal or confidential information into model fields."],
     ["Technical information", "Application request logs contain request identifiers, paths, response status, and duration, not calculation request bodies. Hosting infrastructure may process IP addresses, browser information, and request metadata for delivery, security, and diagnostics. The application does not add advertising or analytics trackers."],
     ["Providers and email", "Vercel hosts the site. If you email the project, Gmail processes your address and message so the project can respond. Providers may process information in countries other than your own. Their privacy notices describe their separate practices."],
-    ["Retention and requests", "Infrastructure logs and email have separate provider retention settings; this notice does not promise a fixed deletion period. Contact the project to ask about your correspondence, request correction or deletion, or raise a concern. Requests depend on applicable obligations and information available to the operator."],
+    ["Retention and requests", "The application does not retain a calculation history. Vercel manages infrastructure-log retention under its service settings and policies. Email correspondence remains in the project mailbox until deleted by the operator; you can request deletion using the contact below. Contact the project to ask about your correspondence, request correction or deletion, or raise a concern. Requests depend on applicable obligations and information available to the operator."],
     ["External research", "Research links lead to independent publishers and repositories. Their privacy practices and access conditions apply when you visit them."]
   ] },
   "/terms": { title: "Terms of use", sections: [
@@ -25,14 +25,14 @@ const pages: Record<string, { title: string; sections: [string, string][] }> = {
     ["Numerical uncertainty", "Tree and grid results depend on resolution and boundary choices. Monte Carlo results have sampling error; confidence intervals do not capture every source of model error. American exercise regression, barrier monitoring, and Asian running-average interpolation introduce additional approximations."],
     ["Independent verification", "Validate outputs independently before consequential use. Accuracy, profit, and avoidance of loss are not guaranteed. Review the selected method explanation and research notes. Use the contact below to report suspected errors."]
   ] },
-  "/notices": { title: "Attributions", sections: [["Materials", "Research is linked to its original authors and publishers. The homepage surface is generated from the Black–Scholes model within this repository. Notices below reproduce license files included with installed frontend packages. The dependency review remains part of release preparation."]] },
+  "/notices": { title: "Attributions", sections: [["Materials", "Research is linked to its original authors and publishers. The homepage surface is generated from the Black–Scholes model within this repository. Notices below reproduce the licenses and attribution notices for frontend software and mathematical fonts used by this site."]] },
 };
 
 export default function InformationPage({ path }: { path: string }) {
   const page = pages[path];
   useEffect(() => { document.getElementById("page-title")?.focus({ preventScroll: true }); }, [path]);
   return <SiteLayout><section className="information-page">
-    <span className="section-index">{page ? "Draft for review · September 8, 2026" : "404"}</span>
+    <span className="section-index">{page ? "Updated September 8, 2026" : "404"}</span>
     <h1 id="page-title" tabIndex={-1}>{page?.title ?? "Page not found"}</h1>
     {page ? <>
       {page.sections.map(([heading, body]) => <section key={heading}><h2>{heading}</h2><p>{body}</p></section>)}

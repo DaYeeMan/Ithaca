@@ -1,6 +1,6 @@
 import { research } from "../site/research";
 import { ResearchContent, AsianLatticeContent } from "../site/ResearchContent";
-import { BlockMath, InlineMath } from "react-katex";
+import { BlockMath, InlineMath } from "./Math";
 import type { OptionFamily, OptionSide, SolverMethod } from "../types";
 
 const methodDescription: Record<SolverMethod, string> = {

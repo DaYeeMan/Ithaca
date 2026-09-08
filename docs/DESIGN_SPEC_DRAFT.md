@@ -1,6 +1,6 @@
 # CapitalCanvas and Ithaca — Design Specification
 
-Status: initial site shell and single-page navigation are implemented locally. Full reference fidelity is pending: the shell does not yet include the spectral illustration or final card proportions, headline width, and navigation placement. Filename retained for existing links. ROADMAP.md owns delivery order; this document owns the target visual and interaction requirements.
+Status: the reference-based home, spectral illustration, project-grouped Resources, About, and Ithaca sidebar changes are implemented. Filename retained for existing links. ROADMAP.md owns remaining release actions.
 
 ## Identity and reference
 
@@ -82,7 +82,7 @@ Compare desktop home against the supplied image for hierarchy, spacing, typograp
 
 ## Current content status
 
-The reference-based home, research entries, and personal/noncommercial About copy are implemented locally. Contact: dymteam23@gmail.com. Emmanuel Zhang appears above the About email, as authorized by the owner. `/notices` supplements the three policy routes. Policy drafts remain subject to deployed hosting-practice verification; see ROADMAP.md for the remaining release gates.
+The reference-based home, research entries, and personal/noncommercial About copy are implemented locally. Contact: dymteam23@gmail.com. Emmanuel Zhang appears above the About email, as authorized by the owner. `/notices` supplements the three policy routes. Policy pages use an update date; license notices are complete for the distributed frontend materials. See ROADMAP.md for publication and firewall actions.
 
 Resources are organized in a collapsible Ithaca project group. Per-paper details are labeled “Implementation”; repeated “Used in Ithaca” labels are removed. Direct paper anchors open their containing project group.
 

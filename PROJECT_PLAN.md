@@ -1,6 +1,6 @@
 # CapitalCanvas — Project Plan
 
-Status: the site-structure phase is implemented and locally verified; Vercel preview validation awaits explicit upload approval. The reference-based home, research content, and legal drafts are implemented. Hosted verification and final privacy/license review remain pending. ROADMAP.md owns unfinished tasks and milestone exit conditions; docs/DESIGN_SPEC_DRAFT.md owns appearance.
+Status: CapitalCanvas and Ithaca are deployed on the same origin and hosted routing/pricing checks pass. Local finalization removes review labels and completes distributed license notices. Deployment of these final changes and firewall publication/review remain; ROADMAP.md owns remaining actions.
 
 ## Product scope
 
@@ -111,7 +111,7 @@ Reuse React/TypeScript/Vite, Plotly, KaTeX, local validation/request modules, an
 
 Additional tools, live data, accounts, saved/shareable results, databases, portfolios, execution, calibration, implied-volatility smiles, and additional stochastic models remain deferred. No newsletter, contact form, analytics, CMS, or monetization is implied.
 
-These exclusions are scope boundaries, not a future delivery commitment. Home design and research/legal drafts are implemented locally. Hosted verification and final release review remain. See ROADMAP.md for tasks and exit conditions.
+These exclusions are scope boundaries, not a future delivery commitment. Home design and research/legal content are implemented. Current hosted checks pass; final local content changes and staged firewall protection still require publication. See ROADMAP.md for tasks and exit conditions.
 
 Owner location confirmed: Chicago, Illinois, United States. The owner confirms a personal, noncommercial project and public contact dymteam23@gmail.com. The owner authorizes displaying Emmanuel Zhang above the About contact email. Audience targeting and deployed provider practices require release review. Domain selection is optional and does not block implementation on the current deployment.
 

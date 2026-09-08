@@ -101,7 +101,7 @@ export default function HomePage() {
     <section id="about" className="home-section reading-section" tabIndex={-1} aria-labelledby="about-title">
       <h2 id="about-title">About CapitalCanvas</h2>
       <p>CapitalCanvas makes quantitative methods easier to explore through interactive tools, visible assumptions, and clear visual results.</p>
-      <p className="about-contact">A personal, noncommercial project based in Chicago.<br /><span className="about-name">Emmanuel Zhang</span><br /><a href={contactHref}>{contactEmail}</a></p>
+      <p className="about-contact"><span className="about-name">Emmanuel Zhang</span><br /><a href={contactHref}>{contactEmail}</a></p>
     </section>
   </SiteLayout>;
 }
