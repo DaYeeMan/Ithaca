@@ -63,3 +63,10 @@ Vercel CLI 59.11.7 can generate an invalid Python bootstrap on Windows when the 
 The reference-based home, research entries, and personal/noncommercial About copy are implemented locally. Contact: dymteam23@gmail.com. Emmanuel Zhang appears above the About email, as authorized by the owner. `/notices` supplements the three policy routes. Policy drafts remain subject to deployed hosting-practice verification; see ROADMAP.md for the remaining release gates.
 
 Resources are organized in a collapsible Ithaca project group. Per-paper details are labeled “Implementation”; repeated “Used in Ithaca” labels are removed. Direct paper anchors open their containing project group.
+
+
+## CapitalCanvas deep-route 404 diagnosis
+
+Read-only production checks on September 8, 2026 at `https://capitalcanvas.vercel.app` returned 200 for `/`, `/index.html`, and `/health`, but Vercel `NOT_FOUND` responses for `/tools/ithaca` and `/privacy`. The web service lacked an explicit SPA fallback. Root service routing selects the web service but does not itself serve the React entry for unknown file paths.
+
+The local `services.web.routes` now checks the filesystem first, then serves `/index.html` for remaining web paths. Existing top-level `/health` and `/v1/*` rules still select the solver service first. Configuration checks pass; this patch is not deployed or verified on Vercel. Redeploy the updated configuration and repeat direct-route, asset, and same-origin API smoke checks before marking the failure resolved. See [Vercel service routing](https://vercel.com/docs/services/routing).
