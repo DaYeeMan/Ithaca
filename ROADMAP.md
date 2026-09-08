@@ -1,14 +1,17 @@
-# CapitalCanvas remaining work
+# CapitalCanvas roadmap
 
-## Current state
+## Baseline
 
-CapitalCanvas is live at https://capitalcanvas.vercel.app in the existing project. Direct home, Ithaca, policy, notices, and unknown-page loads passed the September 8 production check. Same-origin health, capabilities, and a small European solve passed. Home also rendered with API requests blocked. No browser cookies or storage entries were observed in that check.
+The owner confirms all previous roadmap content is complete. Existing CapitalCanvas/Ithaca release and infrastructure work is closed; do not reopen it as part of Troy.
 
-Current local changes finalize policy labels and license notices, simplify footer/About text, and replace the react-katex wrapper with direct KaTeX rendering. Name and email remain in About; legal pages retain their contact details. Mathematical font licenses and Plotly bundled notices are included. Policies retain noindex intentionally; sitemap/canonical work is optional SEO work.
+## Troy — second tool
 
-## Remaining actions
+- [x] Integrate `/tools/troy` and the second home card in the existing frontend.
+- [x] Implement independent dynamics, pricing, quoting, order flow, accounting, and hedge state.
+- [x] Add persistent parameters, model badges, both tabs, charts, and tooltips.
+- [x] Generate imagegen UI ideas in `docs/design/troy-concepts.png`.
+- [x] Test reproducibility, pricing references, inventory limits, settlement, P&L, fills, and pooled statistics.
+- [x] Test model controls, worker cancellation, keyboard tabs, and routing.
+- [ ] Publish Troy through the existing release workflow; check home launch and direct `/tools/troy` refresh on the deployed origin.
 
-- [ ] Deploy the current local changes through the existing release workflow, then confirm policy pages contain no review labels and footer/About edits are live.
-- [ ] Publish the staged log-only firewall rule `Ithaca solve rate`, inspect matching traffic, then enable enforcement after confirming an appropriate threshold. Rule ID: `rule_ithaca_solve_rate_tXl5Aq`. It matches only POST /v1/solve, counts per IP, and logs above 60 requests per 60-second window. It is not live and does not yet provide enforced protection. No other staged rules were present.
-
-The Vercel Firewall skill requires the owner to publish staged firewall changes. Existing application computation bounds, timeout, and per-process concurrency protection remain active.
+Troy is implemented locally. Publication is separate from this implementation request. See `docs/TROY.md` for conventions and bounds.

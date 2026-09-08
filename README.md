@@ -1,12 +1,14 @@
 # CapitalCanvas
 
-Quantitative tools for clearer decisions. This repository contains the CapitalCanvas site and its first tool, Ithaca, an interactive option-pricing workbench.
+Quantitative tools for clearer decisions. This repository contains CapitalCanvas, Ithaca (option pricing), and Troy (options market-making simulation).
 
-CapitalCanvas is live at https://capitalcanvas.vercel.app. Home follows the supplied dark three-card reference, with research and About below it. The latest local changes finalize policy labels and license notices and simplify the footer/About content. Deploy these changes through the existing workflow. See ROADMAP.md for the staged firewall follow-up.
+CapitalCanvas is live at https://capitalcanvas.vercel.app. Previous release work is complete per the owner. Troy is implemented locally and awaits publication through the existing workflow.
 
 Home, Resources, and About navigation scrolls to `/#home`, `/#resources`, and `/#about` on that single page. Resources sits below the hero/tool cards; About sits below Resources.
 
 The existing Ithaca tool prices European, American, barrier, and fixed-strike Asian calls and puts. It includes bounded compute, cooperative request cancellation, structured diagnostics, accessible desktop/mobile controls, synchronized charts, uncertainty, convergence, governing equations, and numerical diagnostics.
+
+Troy at `/tools/troy` separates GBM/Heston/Merton true dynamics from Black–Scholes/CRR/Monte Carlo/Heston pricing beliefs. Explore fills, inventory skew, delta hedging, P&L, sample paths, and return distributions. Simulations run locally in a seeded browser Worker; Troy does not require the solver API. See [docs/TROY.md](./docs/TROY.md).
 
 ## Local development
 
@@ -51,4 +53,4 @@ npm run build:web
 
 ## Remaining work
 
-Deploy the latest content changes and publish/review the staged solve-protection rule before enabling enforcement. ROADMAP.md contains the exact remaining actions; completed site restructuring is no longer an implementation backlog.
+Publish Troy and verify hosted routing through the existing release workflow. ROADMAP.md tracks this separately from completed CapitalCanvas/Ithaca work.

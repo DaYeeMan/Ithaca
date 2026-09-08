@@ -69,7 +69,16 @@ export default function HomePage() {
           <ul className="tool-tags" aria-label="Ithaca features"><li>PDE</li><li>Monte Carlo</li><li>3D Surface</li></ul>
           <a className="launch-link" href="/tools/ithaca">Launch Ithaca <span aria-hidden="true">⟶</span></a>
         </article>
-        {["02", "03"].map((number) => <article className="tool-entry upcoming-tool" key={number} aria-label={`Tool ${number}: coming soon`}>
+        <article className="tool-entry">
+          <span className="section-index" aria-hidden="true">02</span>
+          <span className="ghost-number" aria-hidden="true">02</span>
+          <h2>Troy</h2>
+          <img className="surface-preview" src="/troy-preview.svg" width="450" height="280" alt="" />
+          <p>Make markets. Explore model risk.</p>
+          <ul className="tool-tags" aria-label="Troy features"><li>Options</li><li>Market Making</li><li>Dynamics</li></ul>
+          <a className="launch-link" href="/tools/troy">Launch Troy <span aria-hidden="true">⟶</span></a>
+        </article>
+        {["03"].map((number) => <article className="tool-entry upcoming-tool" key={number} aria-label={`Tool ${number}: coming soon`}>
           <span className="ghost-number" aria-hidden="true">{number}</span><h2>Coming soon</h2>
           <span className="coming-soon-action" aria-hidden="true">Coming soon</span>
         </article>)}

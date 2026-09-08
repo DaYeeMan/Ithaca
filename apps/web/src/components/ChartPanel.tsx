@@ -12,7 +12,7 @@ const plotConfig = {
   modeBarButtonsToRemove: ["toImage", "sendDataToCloud", "lasso2d", "select2d"] as never[],
 };
 
-function ScientificPlot({ data, layout, label }: { data: Data[]; layout: Partial<Layout>; label: string }) {
+export function ScientificPlot({ data, layout, label }: { data: Data[]; layout: Partial<Layout>; label: string }) {
   const container = useRef<HTMLDivElement>(null);
 
   useEffect(() => {

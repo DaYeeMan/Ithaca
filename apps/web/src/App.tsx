@@ -4,9 +4,11 @@ import InformationPage from "./site/InformationPage";
 import "./site/site.css";
 
 const IthacaWorkbench = lazy(() => import("./IthacaWorkbench"));
+const TroyWorkbench = lazy(() => import("./troy/TroyWorkbench"));
 const titles: Record<string, string> = {
   "/": "CapitalCanvas — Quantitative tools",
   "/tools/ithaca": "Ithaca — CapitalCanvas",
+  "/tools/troy": "Troy — CapitalCanvas",
   "/notices": "Attributions — CapitalCanvas",
   "/privacy": "Privacy — CapitalCanvas",
   "/terms": "Terms of use — CapitalCanvas",
@@ -18,7 +20,7 @@ class WorkbenchBoundary extends Component<{ children: ReactNode }, { failed: boo
   static getDerivedStateFromError() { return { failed: true }; }
   render() {
     return this.state.failed
-      ? <main className="route-message"><h1>Ithaca could not load</h1><p>Refresh the page to try again.</p><a href="/#home">Return to CapitalCanvas</a></main>
+      ? <main className="route-message"><h1>Tool could not load</h1><p>Refresh the page to try again.</p><a href="/#home">Return to CapitalCanvas</a></main>
       : this.props.children;
   }
 }
@@ -31,12 +33,18 @@ export default function App() {
     const description = document.querySelector('meta[name="description"]');
     description?.setAttribute("content", path === "/tools/ithaca"
       ? "Explore theoretical option prices with Ithaca, CapitalCanvas's interactive quantitative workbench."
+      : path === "/tools/troy" ? "Explore option market making, model misspecification, quoting, and inventory risk with Troy."
       : "CapitalCanvas: educational quantitative tools, transparent assumptions, and research behind the methods.");
     let robots = document.querySelector('meta[name="robots"]');
     if (!robots) { robots = document.createElement("meta"); robots.setAttribute("name", "robots"); document.head.appendChild(robots); }
-    robots.setAttribute("content", path === "/" || path === "/tools/ithaca" ? "index,follow" : "noindex,follow");
+    robots.setAttribute("content", path === "/" || path === "/tools/ithaca" || path === "/tools/troy" ? "index,follow" : "noindex,follow");
   }, [path]);
 
+  if (path === "/tools/troy") return <WorkbenchBoundary>
+    <Suspense fallback={<main className="route-message" aria-busy="true"><p role="status">Loading Troy…</p><a href="/#home">Return to CapitalCanvas</a></main>}>
+      <TroyWorkbench />
+    </Suspense>
+  </WorkbenchBoundary>;
   if (path === "/tools/ithaca") return <WorkbenchBoundary>
     <Suspense fallback={<main className="route-message" aria-busy="true"><p role="status">Loading Ithaca…</p><a href="/#home">Return to CapitalCanvas</a></main>}>
       <div className="ithaca-workbench"><IthacaWorkbench /></div>

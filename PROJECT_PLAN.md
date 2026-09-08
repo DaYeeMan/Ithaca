@@ -1,6 +1,20 @@
 # CapitalCanvas — Project Plan
 
-Status: CapitalCanvas and Ithaca are deployed on the same origin and hosted routing/pricing checks pass. Local finalization removes review labels and completes distributed license notices. Deployment of these final changes and firewall publication/review remain; ROADMAP.md owns remaining actions.
+Status: The owner confirms the previous CapitalCanvas/Ithaca work is complete. Troy is the second tool, implemented in the existing frontend at `/tools/troy`. The Troy scope below supersedes historical references to two Coming soon cards and deferred additional tools. ROADMAP.md tracks Troy release.
+
+## Troy implementation scope
+
+Troy separates true market dynamics from the maker's pricing assumptions, including separate Heston parameters. Reuse NumberField, ScientificPlot, workbench styles, typography, colors, and native route links. Replace only the second Coming soon card; retain the third.
+
+- Four persistent control groups: Contract, True Market Dynamics, Market Maker (Pricing and Quoting/Risk), Simulation.
+- GBM, Heston, and compensated Merton market dynamics; Black–Scholes, European CRR, risk-neutral GBM Monte Carlo, and risk-neutral Heston Monte Carlo pricing.
+- Seeded paths and separate order-flow streams; inventory-sensitive quotes, quote-sensitive fills, inventory limits, and optional model-delta hedging.
+- Market Making: six metrics, synchronized underlying/option panes, executions, P&L components and costs, inventory and limits.
+- Market Dynamics: 30 sample paths by default, emphasized traded path, pooled log-return histogram, normal reference, and distribution moments.
+- Bounded pure engine in a cancellable browser Worker after 250 ms debounce. No new backend, dependency, database, or external market data.
+- Tests for pricing, model independence, accounting, settlement, quote competitiveness, return pooling, validation, cancellation, routing, and keyboard tabs.
+
+Conventions and extension seams: `docs/TROY.md`. Generated UI ideas: `docs/design/troy-concepts.png`.
 
 ## Product scope
 

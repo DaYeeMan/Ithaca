@@ -10,6 +10,7 @@ vi.mock("./IthacaWorkbench", () => {
   loadWorkbench();
   return { default: () => <main><h1>Ithaca test workbench</h1></main> };
 });
+vi.mock("./troy/TroyWorkbench", () => ({ default: () => <main><h1>Troy test workbench</h1></main> }));
 
 beforeEach(() => {
   window.history.replaceState(null, "", "/");
@@ -38,6 +39,7 @@ describe("CapitalCanvas route boundaries", () => {
     expect(loadWorkbench).not.toHaveBeenCalled();
     expect(fetch).not.toHaveBeenCalled();
     expect(screen.getByRole("link", { name: /Launch Ithaca/ })).toHaveAttribute("href", "/tools/ithaca");
+    expect(screen.getByRole("link", { name: /Launch Troy/ })).toHaveAttribute("href", "/tools/troy");
   });
 
   it.each(["/privacy", "/terms", "/disclaimer", "/notices"])("renders %s with a publication date and shared home anchors", (path) => {
@@ -89,5 +91,12 @@ describe("CapitalCanvas route boundaries", () => {
     expect(await screen.findByRole("heading", { name: "Ithaca test workbench" })).toBeInTheDocument();
     expect(loadWorkbench).toHaveBeenCalledTimes(1);
     expect(document.title).toBe("Ithaca — CapitalCanvas");
+  });
+  it("loads Troy directly on its own route", async () => {
+    window.history.replaceState(null, "", "/tools/troy");
+    render(<App />);
+    expect(await screen.findByRole("heading", { name: "Troy test workbench" })).toBeInTheDocument();
+    expect(document.title).toBe("Troy — CapitalCanvas");
+    expect(fetch).not.toHaveBeenCalled();
   });
 });
