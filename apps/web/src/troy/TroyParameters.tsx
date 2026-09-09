@@ -28,10 +28,10 @@ export function TroyParameters({ config, onChange }: { config: Config; onChange:
     {field(pricing ? 'pricingCorrelation' : 'correlation', 'Correlation ρ', -1, 1, .05, undefined, 'Correlation between spot and variance shocks. Negative values create a leverage effect.')}
   </>;
   return <div className="problem-content">
-    <div className="troy-rail-title"><h2>Experiment</h2><span>PARAMETERS</span></div>
+    <div className="troy-rail-title"><h2>Experiment</h2></div>
     <Group title="01 · Contract">
       <p className="troy-caption">European vanilla · one-unit contracts</p>
-      <label className="select-field">Option Type<select value={config.optionType} onChange={e => set('optionType', e.target.value as Config['optionType'])}><option value="call">Call</option><option value="put">Put</option></select></label>
+      <label className="troy-select">Option Type<select value={config.optionType} onChange={e => set('optionType', e.target.value as Config['optionType'])}><option value="call">Call</option><option value="put">Put</option></select></label>
       {field('spot', 'Initial spot S₀', 1, 10000, 1, '$')}
       {field('strike', 'Strike K', 1, 10000, 1, '$')}
       {field('maturity', 'Maturity T', .01, 5, .05, 'yr')}
@@ -54,8 +54,8 @@ export function TroyParameters({ config, onChange }: { config: Config; onChange:
     <Group title="03 · Market Maker">
       <h3 className="troy-subheading">Pricing</h3>
       <label className="troy-select">Pricing model<select value={config.pricing} onChange={e => set('pricing', e.target.value as Pricing)}>{Object.entries(pricingLabels).map(([key, label]) => <option key={key} value={key}>{label}{key === 'crr' ? ' Binomial' : ''}</option>)}</select></label>
-      <div className="troy-concept maker">Market Maker Believes: {pricingLabels[config.pricing]}</div>
-      <p className="troy-caption">Independent assumptions. Models need not match.</p>
+      <div className="troy-concept maker">Maker Pricing Model: {pricingLabels[config.pricing]}</div>
+      <p className="troy-caption">Used to calculate fair value and delta. Chosen independently of the true market; this is not a model-match indicator.</p>
       {config.pricing === 'heston' ? heston(true) : percent('pricingVolatility', 'Assumed volatility', .1, 200, 'Volatility used by the maker, independent of true market volatility.')}
       {config.pricing === 'crr' && field('treeSteps', 'Binomial steps', 10, 200, 10)}
       {(config.pricing === 'mc' || config.pricing === 'heston') && field('pricingPaths', 'Pricing paths', 64, 2048, 64)}

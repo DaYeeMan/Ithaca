@@ -3,6 +3,7 @@ import { SiteLayout } from "./SiteLayout";
 import type { HomeSection } from "./SiteNavigation";
 import { ResearchContent, AsianLatticeContent } from "./ResearchContent";
 import { research } from "./research";
+import { troyResearch } from "./troyResearch";
 import { contactEmail, contactHref } from "./siteInfo";
 
 const sections: HomeSection[] = ["home", "resources", "about"];
@@ -104,6 +105,23 @@ export default function HomePage() {
             <AsianLatticeContent headingId="asian-lattice-title" />
           </div>
         </article>
+        </div>
+      </details>
+      <details className="resource-project">
+        <summary>Troy</summary>
+        <div className="research-list">
+          {troyResearch.map((entry, index) => <article id={entry.id} className="research-entry" key={entry.id} tabIndex={-1} aria-labelledby={`${entry.id}-title`}>
+            <div className="research-category"><span className="section-index" aria-hidden="true">{String(index + 1).padStart(2, "0")}</span><span>{entry.method}</span></div>
+            <div className="research-body"><ResearchContent entry={entry} headingId={`${entry.id}-title`} /></div>
+          </article>)}
+          <article id="troy-market-making" className="research-entry" tabIndex={-1} aria-labelledby="troy-market-making-title">
+            <div className="research-category"><span className="section-index" aria-hidden="true">07</span><span>Implementation note</span></div>
+            <div className="research-body">
+              <h3 id="troy-market-making-title">Quoting, order flow, and inventory</h3>
+              <p>Troy separates the simulated market from the maker’s pricing assumptions. The selected pricing model computes fair value and delta; its name does not indicate whether it matches the true dynamics.</p>
+              <details><summary>Implementation</summary><p>Inventory shifts quotes, and Poisson arrival intensity decreases with unfavorable quote distance from the maker’s posted fair value. The engine clips fills at inventory limits and optionally hedges model delta. P&L includes option and hedge positions minus transaction costs; cash financing is excluded. This is a project simulation policy, not a calibrated order-flow model or a published optimal quoting strategy.</p></details>
+            </div>
+          </article>
         </div>
       </details>
     </section>

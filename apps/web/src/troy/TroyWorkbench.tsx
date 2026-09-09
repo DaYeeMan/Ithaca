@@ -39,13 +39,13 @@ export default function TroyWorkbench() {
     <a className="skip-link" href="#troy-main">Skip to simulation</a>
     <header className="topbar troy-topbar">
       <a className="back-home" href="/#home" aria-label="Back to CapitalCanvas"><ArrowLeft size={20} /></a>
-      <h1 className="wordmark">Troy</h1><span className="troy-tagline">Options market-making laboratory</span>
+      <h1 className="wordmark">Troy</h1>
       <button className="secondary-button" onClick={() => updateConfig({ ...defaultConfig })}><RotateCcw size={14} /> Reset</button>
     </header>
     <aside className="troy-parameters" aria-label="Simulation parameters"><TroyParameters config={config} onChange={updateConfig} /></aside>
     <main className="troy-main" id="troy-main" tabIndex={-1}>
-      <div className="troy-experiment-heading"><div><span className="troy-eyebrow">SIMULATED REALITY / MODEL BELIEF</span><h2>Explore the cost of being wrong.</h2></div><span className={`troy-run-status ${busy ? 'working' : ''}`} role="status">{error ? 'Needs attention' : busy ? 'Simulating…' : `Seed ${shown.seed} · ${shown.steps} steps`}</span></div>
-      <div className="troy-model-badges"><span>True Market: <strong>{dynamicsLabels[shown.dynamics]}</strong></span><span>Market Maker: <strong>{pricingLabels[shown.pricing]}</strong></span></div>
+      <div className="troy-experiment-heading"><span className={`troy-run-status ${busy ? 'working' : ''}`} role="status">{error ? 'Needs attention' : busy ? 'Simulating…' : `Seed ${shown.seed} · ${shown.steps} steps`}</span></div>
+      <div className="troy-model-badges"><span>True Market: <strong>{dynamicsLabels[shown.dynamics]}</strong></span><span>Maker Pricing Model: <strong>{pricingLabels[shown.pricing]}</strong></span></div>
       <div className="troy-tabs" role="tablist" aria-label="Simulation views">
         {(['making', 'dynamics'] as const).map(id => <button key={id} id={`troy-tab-${id}`} type="button" role="tab" aria-controls={`troy-panel-${id}`} aria-selected={tab === id} tabIndex={tab === id ? 0 : -1}
           onKeyDown={e => { if (['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) { e.preventDefault(); const next = e.key === 'Home' ? 'making' : e.key === 'End' ? 'dynamics' : tab === 'making' ? 'dynamics' : 'making'; setTab(next); document.getElementById(`troy-tab-${next}`)?.focus(); } }}

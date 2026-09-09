@@ -2,8 +2,8 @@
 .troy-workbench .troy-topbar { grid-column: 1 / -1; grid-row: 1; gap: 14px; }
 .troy-tagline { color: var(--muted); font-size: 13px; }
 .troy-workbench .troy-topbar .secondary-button { display: inline-flex; margin-left: auto; }
-.troy-parameters { grid-column: 1; grid-row: 2; min-height: 0; overflow: auto; border-right: 1px solid var(--line); scrollbar-width: thin; }
-.troy-main { grid-column: 2; grid-row: 2; overflow: auto; min-width: 0; padding: 26px 28px 40px; scrollbar-width: thin; }
+.troy-parameters { grid-column: 1; grid-row: 2; min-height: 0; overflow: auto; border-right: 1px solid var(--line); scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
+.troy-main { grid-column: 2; grid-row: 2; overflow: auto; min-width: 0; padding: 26px 28px 40px; scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
 .troy-rail-title { display: flex; align-items: center; justify-content: space-between; }
 .troy-rail-title > span, .troy-eyebrow { color: var(--muted); font-size: 9px; letter-spacing: .14em; }
 .troy-workbench .control-section { padding-bottom: 18px; border-bottom: 1px solid var(--line-soft); }
@@ -22,7 +22,7 @@
 .troy-hint button { display: flex; padding: 2px; border: 0; background: transparent; color: var(--muted); cursor: help; }
 .troy-hint [role=tooltip] { display: none; position: absolute; z-index: 20; width: 246px; right: 0; top: 20px; padding: 11px; color: var(--text); background: var(--surface-raised); border: 1px solid var(--line); border-radius: 4px; box-shadow: 0 6px 20px #0007; font-size: 12px; line-height: 1.5; }
 .troy-hint:hover [role=tooltip], .troy-hint:focus-within [role=tooltip] { display: block; }
-.troy-experiment-heading { display: flex; justify-content: space-between; align-items: center; gap: 18px; }
+.troy-experiment-heading { display: flex; justify-content: flex-end; align-items: center; margin-bottom: 14px; }
 .troy-workbench .troy-experiment-heading h2 { font-size: 27px; margin: 8px 0 18px; }
 .troy-run-status { color: var(--muted); font-size: 11px; white-space: nowrap; }
 .troy-run-status::before { content: ''; display: inline-block; width: 5px; height: 5px; border-radius: 50%; background: var(--green); margin-right: 7px; }
