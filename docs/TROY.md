@@ -6,7 +6,7 @@ Troy lives at `/tools/troy`, lazy-loaded separately from home. European vanilla 
 
 `types.ts` defines experiments, quotes, arrivals, and results. `engine.ts` contains pure market transitions, independent pricing, quoting and arrival policies, and the cash/inventory ledger. `simulation.worker.ts` owns execution. `TroyWorkbench.tsx` debounces changes by 250 ms and terminates obsolete workers. Inputs and results remain in the browser.
 
-Market, fill, and pricing RNGs use separate streams. Changing pricing, hedging, or sample count preserves the traded underlying path. Path zero in Sample Paths is exactly the Market Making path. Statistics pool each path once.
+Market, fill, and pricing RNGs use separate streams. The UI draws a fresh browser-random seed on opening Troy, switching true dynamics, resetting, or pressing New market. Changing pricing, hedging, or sample count preserves the traded underlying path. Enter a previous seed after choosing the dynamics to replay an experiment with identical settings. The engine itself remains deterministic. Path zero in Sample Paths is exactly the Market Making path. Statistics pool each path once.
 
 Dynamics own spot/variance state. Pricing uses separate assumptions and risk-neutral drift `r−q`; it never reads true variance parameters. `simulate(config, modules)` accepts optional `DynamicsTransition`, `PricingModel`, `ContractPayoff`, quote, and arrival policies. Pricing consumes market context and returns value/delta; contract payoff receives spot, time, and path history. New dynamics or path-dependent contract adapters can therefore reuse the ledger. The initial UI exposes European vanilla options only; early exercise would also need an exercise-timing extension.
 

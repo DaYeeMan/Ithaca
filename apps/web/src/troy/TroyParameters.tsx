@@ -3,6 +3,7 @@ import { useId, type ReactNode } from 'react';
 import { NumberField } from '../components/NumberField';
 import type { Config, Dynamics, Pricing } from './types';
 import { dynamicsLabels, pricingLabels } from './labels';
+import { freshSeed } from './experimentSeed';
 
 function Hint({ text, label }: { text: string; label: string }) {
   const id = useId();
@@ -54,8 +55,6 @@ export function TroyParameters({ config, onChange }: { config: Config; onChange:
     <Group title="03 · Market Maker">
       <h3 className="troy-subheading">Pricing</h3>
       <label className="troy-select">Pricing model<select value={config.pricing} onChange={e => set('pricing', e.target.value as Pricing)}>{Object.entries(pricingLabels).map(([key, label]) => <option key={key} value={key}>{label}{key === 'crr' ? ' Binomial' : ''}</option>)}</select></label>
-      <div className="troy-concept maker">Maker Pricing Model: {pricingLabels[config.pricing]}</div>
-      <p className="troy-caption">Used to calculate fair value and delta. Chosen independently of the true market; this is not a model-match indicator.</p>
       {config.pricing === 'heston' ? heston(true) : percent('pricingVolatility', 'Assumed volatility', .1, 200, 'Volatility used by the maker, independent of true market volatility.')}
       {config.pricing === 'crr' && field('treeSteps', 'Binomial steps', 10, 200, 10)}
       {(config.pricing === 'mc' || config.pricing === 'heston') && field('pricingPaths', 'Pricing paths', 64, 2048, 64)}
@@ -73,6 +72,8 @@ export function TroyParameters({ config, onChange }: { config: Config; onChange:
       {field('horizon', 'Simulation horizon', .01, 5, .05, 'yr', 'Effective horizon is capped at contract maturity.')}
       {field('steps', 'Time steps', 20, 1000, 20)}
       {field('seed', 'Random seed', 0, 2147483647, 1)}
+      <button type="button" className="secondary-button troy-new-market" onClick={() => set('seed', freshSeed(config.seed))}>New market</button>
+      <p className="troy-caption">New market draws a fresh seed. Reuse a seed to replay the same experiment.</p>
       {field('samplePaths', 'Sample paths', 2, 50, 1)}
       {field('fillIntensity', 'Order arrival intensity', 0, 2000, 20, '/yr', 'Base total customer arrivals per year, before quote competitiveness reduces fills.')}
       {percent('buyFlowBalance', 'Buy flow balance', 0, 100, 'Share of customer buy orders, which hit the maker’s ask. 50% gives balanced flow.')}

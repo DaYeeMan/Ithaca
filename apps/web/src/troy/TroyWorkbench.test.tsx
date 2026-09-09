@@ -15,7 +15,11 @@ class TestWorker {
   constructor() { TestWorker.instances.push(this); }
   postMessage(config: Config) { this.posted = config; }
 }
-beforeEach(() => { vi.useFakeTimers(); TestWorker.instances = []; vi.stubGlobal('Worker', TestWorker); });
+beforeEach(() => {
+  vi.useFakeTimers(); TestWorker.instances = []; vi.stubGlobal('Worker', TestWorker);
+  let nextSeed = 100;
+  vi.stubGlobal('crypto', { getRandomValues: (values: Uint32Array) => { values[0] = ++nextSeed; return values; } });
+});
 afterEach(() => { cleanup(); vi.useRealTimers(); vi.unstubAllGlobals(); });
 const tick = () => act(() => vi.advanceTimersByTime(260));
 describe('Troy experiment controls', () => {
@@ -50,7 +54,8 @@ describe('Troy experiment controls', () => {
     act(() => TestWorker.instances[1].onmessage?.({ data: { error: 'Compute budget exceeded' } }));
     expect(screen.getByRole('alert')).toHaveTextContent('Compute budget exceeded');
     fireEvent.click(screen.getByRole('button', { name: 'Reset' })); tick();
-    expect(TestWorker.instances[2].posted).toEqual(defaultConfig);
+    expect(TestWorker.instances[2].posted).toEqual({ ...defaultConfig, seed: TestWorker.instances[2].posted?.seed });
+    expect(TestWorker.instances[2].posted?.seed).not.toBe(first.posted?.seed);
   });
   it('switches tabs with keyboard and conditionally exposes model controls', () => {
     render(<TroyWorkbench />);
@@ -73,6 +78,24 @@ describe('Troy experiment controls', () => {
     fireEvent.change(screen.getByRole('spinbutton', { name: 'Drift μ %' }), { target: { value: '-5' } });
     tick();
     expect(TestWorker.instances[0].posted?.drift).toBe(-.05);
+  });
+  it('draws new realizations on market switches and New market, while allowing seed replay', () => {
+    render(<TroyWorkbench />); tick();
+    fireEvent.change(screen.getByLabelText('Dynamics model'), { target: { value: 'merton' } }); tick();
+    const firstMerton = TestWorker.instances.at(-1)!.posted!;
+    fireEvent.change(screen.getByLabelText('Dynamics model'), { target: { value: 'gbm' } }); tick();
+    fireEvent.change(screen.getByLabelText('Dynamics model'), { target: { value: 'merton' } }); tick();
+    const secondMerton = TestWorker.instances.at(-1)!.posted!;
+    expect(secondMerton.seed).not.toBe(firstMerton.seed);
+    expect(simulate(secondMerton).samplePaths[0]).not.toEqual(simulate(firstMerton).samplePaths[0]);
+    fireEvent.change(screen.getByLabelText('Random seed'), { target: { value: String(firstMerton.seed) } }); tick();
+    expect(simulate(TestWorker.instances.at(-1)!.posted!).samplePaths[0]).toEqual(simulate(firstMerton).samplePaths[0]);
+    fireEvent.change(screen.getByLabelText('Pricing model'), { target: { value: 'mc' } }); tick();
+    expect(TestWorker.instances.at(-1)!.posted!.seed).toBe(firstMerton.seed);
+    expect(within(screen.getByRole('complementary')).queryByText(/Maker Pricing Model:/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/this is not a model-match indicator/)).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'New market' })); tick();
+    expect(TestWorker.instances.at(-1)!.posted!.seed).not.toBe(firstMerton.seed);
   });
 });
 

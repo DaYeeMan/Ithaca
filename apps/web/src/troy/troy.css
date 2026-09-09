@@ -5,6 +5,7 @@
 .troy-parameters { grid-column: 1; grid-row: 2; min-height: 0; overflow: auto; border-right: 1px solid var(--line); scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
 .troy-main { grid-column: 2; grid-row: 2; overflow: auto; min-width: 0; padding: 26px 28px 40px; scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
 .troy-rail-title { display: flex; align-items: center; justify-content: space-between; }
+.troy-workbench .troy-new-market { display: inline-flex; width: 100%; margin: 8px 0 0; }
 .troy-rail-title > span, .troy-eyebrow { color: var(--muted); font-size: 9px; letter-spacing: .14em; }
 .troy-workbench .control-section { padding-bottom: 18px; border-bottom: 1px solid var(--line-soft); }
 .troy-workbench .select-field, .troy-workbench .number-field { grid-template-columns: minmax(0, 1fr) 105px; font-size: 12px; }

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { ArrowLeft, RotateCcw } from 'lucide-react';
 import { defaultConfig } from './engine';
+import { freshSeed } from './experimentSeed';
 import type { Config, SimulationResult } from './types';
 import { TroyParameters } from './TroyParameters';
 import { dynamicsLabels, pricingLabels } from './labels';
@@ -10,12 +11,15 @@ import './troy.css';
 
 const money = (value: number) => `${value < 0 ? '−' : ''}$${Math.abs(value).toFixed(2)}`;
 export default function TroyWorkbench() {
-  const [config, setConfig] = useState<Config>(defaultConfig);
+  const [config, setConfig] = useState<Config>(() => ({ ...defaultConfig, seed: freshSeed() }));
   const [result, setResult] = useState<SimulationResult | null>(null);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(true);
   const [tab, setTab] = useState<'making' | 'dynamics'>('making');
-  const updateConfig = (value: Config) => { setConfig(value); setBusy(true); setError(''); };
+  const updateConfig = (value: Config) => {
+    setConfig(value.dynamics !== config.dynamics ? { ...value, seed: freshSeed(config.seed) } : value);
+    setBusy(true); setError('');
+  };
   useEffect(() => {
     let active = true;
     let worker: Worker | undefined;
@@ -40,7 +44,7 @@ export default function TroyWorkbench() {
     <header className="topbar troy-topbar">
       <a className="back-home" href="/#home" aria-label="Back to CapitalCanvas"><ArrowLeft size={20} /></a>
       <h1 className="wordmark">Troy</h1>
-      <button className="secondary-button" onClick={() => updateConfig({ ...defaultConfig })}><RotateCcw size={14} /> Reset</button>
+      <button className="secondary-button" onClick={() => updateConfig({ ...defaultConfig, seed: freshSeed(config.seed) })}><RotateCcw size={14} /> Reset</button>
     </header>
     <aside className="troy-parameters" aria-label="Simulation parameters"><TroyParameters config={config} onChange={updateConfig} /></aside>
     <main className="troy-main" id="troy-main" tabIndex={-1}>
