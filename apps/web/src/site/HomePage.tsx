@@ -58,16 +58,16 @@ export default function HomePage() {
 
   return <SiteLayout active={active}>
     <section id="home" className="home-section" tabIndex={-1} aria-labelledby="home-title">
-      <h1 id="home-title">Quantitative tools for clearer decisions.</h1>
-      <p className="site-intro">Purpose-built models. Transparent assumptions. Visual results.</p>
+      <h1 id="home-title">Explore pricing and market dynamics.</h1>
+      <p className="site-intro">Visual tools for understanding financial models.</p>
       <div className="tool-list">
         <article className="tool-entry">
           <span className="section-index" aria-hidden="true">01</span>
           <span className="ghost-number" aria-hidden="true">01</span>
           <h2>Ithaca</h2>
           <img className="surface-preview" src="/ithaca-surface.svg" width="450" height="280" alt="" fetchPriority="high" />
-          <p>Explore option prices across spot and time.</p>
-          <ul className="tool-tags" aria-label="Ithaca features"><li>PDE</li><li>Monte Carlo</li><li>3D Surface</li></ul>
+          <p>Visualize option prices across contract types, models, and parameters.</p>
+          <ul className="tool-tags" aria-label="Ithaca features"><li>Options</li><li>Analytical Pricing</li><li>Numerical Pricing</li></ul>
           <a className="launch-link" href="/tools/ithaca">Launch Ithaca <span aria-hidden="true">⟶</span></a>
         </article>
         <article className="tool-entry">
@@ -75,8 +75,8 @@ export default function HomePage() {
           <span className="ghost-number" aria-hidden="true">02</span>
           <h2>Troy</h2>
           <img className="surface-preview" src="/troy-preview.svg" width="450" height="280" alt="" />
-          <p>Make markets. Explore model risk.</p>
-          <ul className="tool-tags" aria-label="Troy features"><li>Options</li><li>Market Making</li><li>Dynamics</li></ul>
+          <p>Simulate market making across pricing models and market dynamics.</p>
+          <ul className="tool-tags" aria-label="Troy features"><li>Market Making</li><li>Dynamics</li><li>Model Risk</li></ul>
           <a className="launch-link" href="/tools/troy">Launch Troy <span aria-hidden="true">⟶</span></a>
         </article>
         {["03"].map((number) => <article className="tool-entry upcoming-tool" key={number} aria-label={`Tool ${number}: coming soon`}>
@@ -127,7 +127,7 @@ export default function HomePage() {
     </section>
     <section id="about" className="home-section reading-section" tabIndex={-1} aria-labelledby="about-title">
       <h2 id="about-title">About CapitalCanvas</h2>
-      <p>CapitalCanvas makes quantitative methods easier to explore through interactive tools, visible assumptions, and clear visual results.</p>
+      <p>I built Capital Canvas to use visualization and experimentation to make quantitative finance easier to understand. Through interactive tools, building the intuition for pricing models, simulations, and market dynamics becomes easier.</p>
       <p className="about-contact"><span className="about-name">Emmanuel Zhang</span><br /><a href={contactHref}>{contactEmail}</a></p>
     </section>
   </SiteLayout>;
