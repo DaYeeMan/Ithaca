@@ -58,8 +58,8 @@ export default function HomePage() {
 
   return <SiteLayout active={active}>
     <section id="home" className="home-section" tabIndex={-1} aria-labelledby="home-title">
-      <h1 id="home-title">Explore pricing and market dynamics.</h1>
-      <p className="site-intro">Visual tools for understanding financial models.</p>
+      <h1 id="home-title">Explore pricing and market dynamics</h1>
+      <p className="site-intro">Visual tools for understanding financial models</p>
       <div className="tool-list">
         <article className="tool-entry">
           <span className="section-index" aria-hidden="true">01</span>
@@ -88,7 +88,6 @@ export default function HomePage() {
     <section id="resources" className="home-section reading-section" tabIndex={-1} aria-labelledby="resources-title">
       <div className="section-heading">
         <h2 id="resources-title">Research and methods</h2>
-        <p>Explore the ideas behind the tools, their assumptions, and how they are implemented.</p>
       </div>
       <details className="resource-project">
         <summary>Ithaca</summary>
