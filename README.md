@@ -1,14 +1,10 @@
 # CapitalCanvas
 
-Quantitative tools for clearer decisions. This repository contains CapitalCanvas, Ithaca (option pricing), and Troy (options market-making simulation).
+CapitalCanvas is a personal, noncommercial project for learning quantitative finance through interactive models, transparent assumptions, and visual results.
 
-CapitalCanvas is live at https://capitalcanvas.vercel.app. Previous release work is complete per the owner. Troy is implemented locally and awaits publication through the existing workflow.
+The existing tools are **Ithaca**, an option-pricing workbench, and **Troy**, an options market-making simulator. The home page has a third Coming soon slot; its name and scope are not yet defined.
 
-Home, Resources, and About navigation scrolls to `/#home`, `/#resources`, and `/#about` on that single page. Resources sits below the hero/tool cards; About sits below Resources.
-
-The existing Ithaca tool prices European, American, barrier, and fixed-strike Asian calls and puts. It includes bounded compute, cooperative request cancellation, structured diagnostics, accessible desktop/mobile controls, synchronized charts, uncertainty, convergence, governing equations, and numerical diagnostics.
-
-Troy at `/tools/troy` separates GBM/Heston/Merton true dynamics from Black–Scholes/CRR/Monte Carlo/Heston pricing beliefs. Explore fills, inventory skew, delta hedging, P&L, sample paths, and return distributions. Simulations run locally in a seeded browser Worker; Troy does not require the solver API. See [docs/TROY.md](./docs/TROY.md).
+See [Product context](docs/PRODUCT.md) for current capabilities, design conventions, and code locations useful when planning another tool. These notes describe the repository, not current deployment status. Troy runs in the browser without the solver API.
 
 ## Local development
 
@@ -41,16 +37,8 @@ npm run build:web
 .\services\solver-api\.venv\Scripts\python.exe -m unittest discover -s services/solver-api/tests
 ```
 
-## Project documents
+## Reference material
 
-- [PROJECT_PLAN.md](./PROJECT_PLAN.md): CapitalCanvas site structure, content, architecture, and acceptance criteria
-- [ROADMAP.md](./ROADMAP.md): next implementation steps in order, with milestone exit conditions
-- [docs/BENCHMARKS.md](./docs/BENCHMARKS.md): numerical reference cases and accuracy gates
-- [docs/DESIGN_SPEC_DRAFT.md](./docs/DESIGN_SPEC_DRAFT.md): CapitalCanvas home direction and preserved Ithaca composition
-- [docs/ACCESSIBILITY.md](./docs/ACCESSIBILITY.md): keyboard and screen-reader audit
-- [docs/PERFORMANCE.md](./docs/PERFORMANCE.md): performance gates and resource controls
-- [docs/OPERATIONS.md](./docs/OPERATIONS.md): deployment, monitoring, smoke tests, and rollback
+Numerical reference cases and tolerances live in `services/solver-api/tests/` and `apps/web/src/troy/engine.test.ts`. `scripts/smoke_test.py` checks frontend/API routing and a reference price.
 
-## Remaining work
-
-Publish Troy and verify hosted routing through the existing release workflow. ROADMAP.md tracks this separately from completed CapitalCanvas/Ithaca work.
+[License sources](docs/licenses/README.md) describe third-party attribution maintenance.
